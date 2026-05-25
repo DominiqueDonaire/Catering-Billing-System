@@ -39,19 +39,45 @@ File Management
 
 
 Tech Stack
-	Backend:
-		Python 3.x
-		Flask (Web Framework)
-		Flask-CORS (Cross-Origin Resource Sharing)
-		MySQL (Database)
-		Werkzeug (Password hashing)
+Backend:
+	Python 3.x
+	Flask (Web Framework)
+	Flask-CORS (Cross-Origin Resource Sharing)
+	MySQL (Database)
+	Werkzeug (Password hashing)
 
-	Frontend:
-		HTML5
-		CSS3
-		JavaScript (ES6+)
+Frontend:
+	HTML5
+	CSS3
+	JavaScript (ES6+)
 
 Responsive design
-Database:
-MySQL with role-based access tables
-Structured schema for customers, orders, payments, and menu items
+   Database:
+   MySQL with role-based access tables
+   Structured schema for customers, orders, payments, and menu items
+
+The API will be available at http://localhost:5000
+API Endpoints
+
+Authentication:
+POST /register - Customer registration
+POST /login - User login
+Customers:
+
+GET /customers - List all customers
+GET /customers/<id> - Get customer details
+POST /customers - Add new customer
+Menu:
+
+GET /menu - List all menu items
+POST /menu - Add menu item
+Orders:
+
+GET /orders - List orders
+POST /orders - Create new order
+PATCH /orders/<id> - Update order status
+Payments:
+
+GET /payments - List payments
+POST /payments - Record payment
+GET /payments/<order_id> - Get payment by order
