@@ -432,8 +432,8 @@ function renderPayments(data) {
       if (vs==='Pending')  actions+='<button class="action-btn btn-reject" onclick="verifyPayment('+p.PaymentID+',\'reject\')">\u274C Reject</button>';
     }
     // Receipt: all roles when verified
-    if (vs==='Verified') actions+='<button class="action-btn btn-receipt" onclick="printReceipt('+p.PaymentID+')">\uD83E\uDDFE Receipt</button>';
-    if (vs==='Verified') actions+='<button class="action-btn btn-pdf" onclick="downloadReceiptPDF('+p.PaymentID+')">\u2B07\uFE0F PDF</button>';
+    if (vs==='Verified') actions+='<button class="action-btn btn-receipt" onclick="printReceipt('+p.PaymentID+')" title="View payment receipt">\uD83E\uDDFE Receipt</button>';
+    if (vs==='Verified') actions+='<button class="action-btn btn-pdf" onclick="downloadReceiptPDF('+p.PaymentID+')" title="Download as PDF">\u2B07\uFE0F PDF</button>';
 
     tbody.innerHTML+='<tr id="payment-row-'+p.PaymentID+'" data-status="'+vs+'" data-order="'+p.OrderID+'">'
       +'<td><strong>#'+p.PaymentID+'</strong></td>'
@@ -872,6 +872,6 @@ window.onload=async()=>{
   await loadOrderOptions();
 };
 </script>
-<script src="settings.js"></script>
+<script src="js/settings.js"></script>
 </body>
 </html>
