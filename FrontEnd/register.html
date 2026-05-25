@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register — Catering Billing System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #F5A820;
+      font-family: 'Poppins', sans-serif;
+      padding: 30px 0;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.13) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none; z-index: 0;
+    }
+    body.dark { background-color: #181a1b; }
+    body.dark::before { background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px); }
+
+    .wrapper {
+      position: relative; z-index: 1;
+      display: flex; width: 920px;
+      border-radius: 28px; overflow: hidden;
+      box-shadow: 0 32px 90px rgba(0,0,0,0.25);
+    }
+
+    /* ─── LEFT ─── */
+    .left {
+      flex: 1; position: relative;
+      overflow: hidden; background: #111;
+    }
+    .left-bg {
+      position: absolute; inset: 0;
+      background: url('https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=900&auto=format&fit=crop&q=80') center/cover no-repeat;
+      filter: brightness(0.55) saturate(1.1);
+    }
+    .left::after {
+      content: ''; position: absolute;
+      top: 0; right: -2px; width: 90px; height: 100%;
+      background: #fff;
+      clip-path: ellipse(90px 52% at 100% 50%);
+      z-index: 4;
+    }
+    body.dark .left::after { background: #202124; }
+
+    .left-content {
+      position: relative; z-index: 3;
+      height: 100%; display: flex;
+      flex-direction: column; padding: 36px 32px;
+    }
+
+    .food-stack {
+      flex: 1; display: flex;
+      flex-direction: column; align-items: center;
+      justify-content: center; gap: 18px;
+      padding-right: 40px;
+    }
+    .food-circle {
+      width: 200px; height: 200px;
+      border-radius: 50%; object-fit: cover;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.5);
+      border: 4px solid rgba(255,255,255,0.18);
+    }
+    .food-circle.small {
+      width: 155px; height: 155px;
+      align-self: flex-start; margin-left: 24px;
+    }
+
+    .bolt {
+      position: absolute; font-size: 28px;
+      color: #F5A820;
+      animation: zbolt 3.5s ease-in-out infinite; z-index: 3;
+    }
+    .bolt-1 { top: 48px;   right: 110px; animation-delay:0s; }
+    .bolt-2 { top: 34px;   left:  30px;  animation-delay:1s;   font-size:18px; }
+    .bolt-3 { bottom:80px; right: 70px;  animation-delay:2s;   font-size:22px; }
+    .bolt-4 { bottom:48px; left:  38px;  animation-delay:.5s;  font-size:16px; }
+    @keyframes zbolt {
+      0%,100% { transform:rotate(-18deg) translateY(0); }
+      50%      { transform:rotate(18deg) translateY(-7px); }
+    }
+
+    .left-bottom { color:#fff; padding-bottom:4px; }
+    .left-bottom h2 { font-size:27px; font-weight:800; line-height:1.2; margin-bottom:8px; }
+    .left-bottom p  { font-size:13px; opacity:.82; line-height:1.55; max-width:280px; }
+    .dots { display:flex; gap:7px; margin-top:14px; }
+    .dot  { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.4); }
+    .dot.active { background:#fff; width:22px; border-radius:4px; }
+
+    /* ─── RIGHT ─── */
+    .right {
+      width: 420px; flex-shrink:0;
+      background:#fff;
+      display:flex; flex-direction:column;
+      justify-content:flex-start;
+      padding: 36px 44px 36px;
+      position:relative;
+      overflow-y: auto;
+      max-height: 92vh;
+      scrollbar-width: thin;
+      scrollbar-color: #e0d0c0 transparent;
+    }
+    body.dark .right { background:#202124; color:#e8eaed; }
+    .right::before {
+      content:''; position:absolute; top:-70px; right:-70px;
+      width:200px; height:200px;
+      background:radial-gradient(circle, rgba(245,168,32,.13) 0%, transparent 70%);
+      border-radius:50%; pointer-events:none;
+    }
+
+    .eyebrow {
+      font-size:11px; font-weight:600;
+      letter-spacing:2.5px; text-transform:uppercase;
+      color:#F5A820; margin-bottom:5px;
+    }
+    .form-title {
+      font-size:24px; font-weight:800;
+      color:#1a1a1a; line-height:1.2; margin-bottom:20px;
+    }
+    body.dark .form-title { color:#e8eaed; }
+
+    /* messages */
+    .msg {
+      font-size:12px; padding:10px 14px;
+      border-radius:12px; margin-bottom:12px;
+      display:none; font-weight:500; text-align:center;
+    }
+    .msg.error   { background:#fdecea; color:#c62828; border:1.5px solid #e53935; }
+    .msg.success { background:#e8f5e9; color:#2e7d32; border:1.5px solid #43a047; }
+    body.dark .msg.error   { background:#3a1010; color:#ff6b6b; border-color:#ff4444; }
+    body.dark .msg.success { background:#0f2a0f; color:#69db7c; border-color:#40c057; }
+
+    /* two-column row */
+    .row-2 { display:flex; gap:12px; margin-bottom:0; }
+    .row-2 .field { flex:1; }
+
+    /* pill fields */
+    .field { margin-bottom:13px; }
+    .field label {
+      display:block; font-size:10px; font-weight:600;
+      letter-spacing:1.8px; text-transform:uppercase;
+      color:#aaa; margin-bottom:5px;
+    }
+    body.dark .field label { color:#f0c040; }
+
+    .field input,
+    .field select {
+      width:100%; height:46px;
+      padding:0 18px;
+      border:1.8px solid #EBEBEB; border-radius:50px;
+      background:#F9F9F9;
+      font-size:13.5px; font-family:'Poppins',sans-serif;
+      color:#1a1a1a; outline:none;
+      transition:border-color .2s, background .2s;
+    }
+    .field input:focus,
+    .field select:focus { border-color:#F5A820; background:#fff; }
+    .field input::placeholder { color:#c8c8c8; }
+    body.dark .field input,
+    body.dark .field select { background:#2b2d31; border-color:#3c4043; color:#e8eaed; }
+    body.dark .field input::placeholder { color:#9aa0a6; }
+    body.dark .field input:focus,
+    body.dark .field select:focus { border-color:#f0c040; background:#242628; }
+
+    /* select arrow */
+    .field select {
+      appearance:none; -webkit-appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23aaa' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 18px center;
+      padding-right:40px; cursor:pointer;
+    }
+
+    /* pw wrap */
+    .pw-wrap { position:relative; }
+    .pw-wrap input { padding-right:50px; }
+    .pw-toggle {
+      position:absolute; right:16px; top:50%;
+      transform:translateY(-50%);
+      background:none; border:none;
+      cursor:pointer; font-size:15px; color:#ccc; padding:0;
+    }
+    body.dark .pw-toggle { color:#80868b; }
+
+    /* strength */
+    .strength-bar {
+      height:4px; border-radius:4px;
+      margin-top:6px; background:#eee; overflow:hidden;
+    }
+    .strength-fill { height:100%; width:0%; border-radius:4px; transition:width .3s, background .3s; }
+    .strength-text { font-size:10px; color:#aaa; margin-top:3px; }
+
+    /* sign up button — green pill */
+    .btn-register {
+      width:100%; height:52px;
+      background:#5CB85C; color:#fff; border:none;
+      border-radius:50px;
+      font-size:15px; font-weight:700; letter-spacing:.5px;
+      font-family:'Poppins',sans-serif; cursor:pointer;
+      margin-top:6px;
+      box-shadow:0 8px 24px rgba(92,184,92,.38);
+      transition:background .2s, transform .15s, box-shadow .2s;
+    }
+    .btn-register:hover { background:#4cae4c; transform:translateY(-2px); box-shadow:0 12px 30px rgba(92,184,92,.45); }
+    .btn-register:active { transform:translateY(0); }
+    .btn-register:disabled { background:#ccc; box-shadow:none; cursor:not-allowed; }
+
+    .login-link {
+      text-align:center; margin-top:14px;
+      font-size:13px; color:#aaa;
+    }
+    .login-link a { color:#F5A820; font-weight:600; text-decoration:none; }
+    .login-link a:hover { text-decoration:underline; }
+    body.dark .login-link { color:#9aa0a6; }
+
+    .dark-toggle {
+      position:absolute; top:14px; right:14px;
+      background:rgba(255,255,255,.18); border:none;
+      border-radius:50%; width:36px; height:36px;
+      font-size:16px; cursor:pointer; z-index:10;
+      display:flex; align-items:center; justify-content:center;
+    }
+    body.dark .dark-toggle { background:rgba(255,255,255,.08); }
+
+    /* entrance */
+    .right > * { animation:up .5s cubic-bezier(.22,1,.36,1) both; }
+    @keyframes up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+    .eyebrow      { animation-delay:.06s; }
+    .form-title   { animation-delay:.12s; }
+    .row-2        { animation-delay:.18s; }
+    .field:nth-of-type(1) { animation-delay:.22s; }
+    .field:nth-of-type(2) { animation-delay:.26s; }
+    .field:nth-of-type(3) { animation-delay:.30s; }
+    .field:nth-of-type(4) { animation-delay:.34s; }
+    .field:nth-of-type(5) { animation-delay:.38s; }
+    .field:nth-of-type(6) { animation-delay:.42s; }
+    .btn-register { animation-delay:.46s; }
+    .login-link   { animation-delay:.50s; }
+
+    @media (max-width: 680px) {
+      .left { display:none; }
+      .right { width:100%; border-radius:28px; max-height:none; }
+      .wrapper { width:95%; border-radius:28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <button class="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+    <span id="dark-icon">🌙</span>
+  </button>
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-bg"></div>
+    <span class="bolt bolt-1">⚡</span>
+    <span class="bolt bolt-2">⚡</span>
+    <span class="bolt bolt-3">⚡</span>
+    <span class="bolt bolt-4">⚡</span>
+
+    <div class="left-content">
+      <div class="food-stack">
+        <img class="food-circle"
+          src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500&auto=format&fit=crop&q=80"
+          alt="Catering food">
+        <img class="food-circle small"
+          src="https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&auto=format&fit=crop&q=80"
+          alt="Catering dish">
+      </div>
+      <div class="left-bottom">
+        <h2>Join our<br>catering family!</h2>
+        <p>Register and book our services for your next special event.</p>
+        <div class="dots">
+          <div class="dot active"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <p class="eyebrow">Get started</p>
+    <h2 class="form-title">🍽️ CREATE AN ACCOUNT</h2>
+
+    <div id="error-msg"   class="msg error"></div>
+    <div id="success-msg" class="msg success"></div>
+
+    <!-- First + Last name -->
+    <div class="row-2">
+      <div class="field">
+        <label>First Name</label>
+        <input type="text" id="fname" placeholder="e.g. Juan">
+      </div>
+      <div class="field">
+        <label>Last Name</label>
+        <input type="text" id="lname" placeholder="e.g. Dela Cruz">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Choose a username" autocomplete="username">
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="email" placeholder="e.g. juan@gmail.com" autocomplete="email">
+    </div>
+
+    <div class="field">
+      <label>Phone Number</label>
+      <input type="text" id="phone" placeholder="e.g. 09XXXXXXXXX" maxlength="11">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="At least 6 characters" oninput="checkStrength()">
+        <button class="pw-toggle" type="button" onclick="togglePw('password','eye1')"><span id="eye1">👁️</span></button>
+      </div>
+      <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+      <div class="strength-text" id="strength-text"></div>
+    </div>
+
+    <div class="field">
+      <label>Confirm Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="confirm-password" placeholder="Re-type your password">
+        <button class="pw-toggle" type="button" onclick="togglePw('confirm-password','eye2')"><span id="eye2">👁️</span></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Role</label>
+      <select id="role">
+        <option value="customer">Customer</option>
+        <option value="staff">Staff</option>
+        <option value="admin">Admin</option>
+      </select>
+    </div>
+
+    <button class="btn-register" id="reg-btn" onclick="register()">SIGN UP</button>
+
+    <div class="login-link">
+      Already have an account? <a href="login.html">Sign in here</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  function togglePw(inputId, eyeId) {
+    const input = document.getElementById(inputId);
+    const eye   = document.getElementById(eyeId);
+    if (input.type === 'password') { input.type = 'text'; eye.textContent = '🙈'; }
+    else { input.type = 'password'; eye.textContent = '👁️'; }
+  }
+
+  function checkStrength() {
+    const pw   = document.getElementById('password').value;
+    const fill = document.getElementById('strength-fill');
+    const text = document.getElementById('strength-text');
+    let s = 0;
+    if (pw.length >= 6)           s++;
+    if (pw.length >= 10)          s++;
+    if (/[A-Z]/.test(pw))         s++;
+    if (/[0-9]/.test(pw))         s++;
+    if (/[^A-Za-z0-9]/.test(pw))  s++;
+    const levels = [
+      { w:'0%',   bg:'#eee',    label:'' },
+      { w:'25%',  bg:'#e53935', label:'⚠️ Weak' },
+      { w:'50%',  bg:'#fb8c00', label:'🔶 Fair' },
+      { w:'75%',  bg:'#fdd835', label:'🔷 Good' },
+      { w:'100%', bg:'#43a047', label:'✅ Strong' },
+    ];
+    const lvl = Math.min(s, 4);
+    fill.style.width      = levels[lvl].w;
+    fill.style.background = levels[lvl].bg;
+    text.textContent      = levels[lvl].label;
+  }
+
+  function toggleDark() {
+    document.body.classList.toggle('dark');
+    const icon = document.getElementById('dark-icon');
+    icon.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+  }
+  window.onload = () => {
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark');
+      document.getElementById('dark-icon').textContent = '☀️';
+    }
+  };
+</script>
+</body>
+</html>

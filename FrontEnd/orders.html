@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Orders</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    (function () {
+      const size = Number(localStorage.getItem('fontSize'));
+      const resolved = [13, 15, 17, 19].includes(size) ? size : 15;
+      document.documentElement.style.fontSize = '15px';
+      document.documentElement.style.zoom = String(resolved / 15);
+    })();
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; display: flex; min-height: 100vh; }
+    body.dark { background: #181a1b; color: #e8eaed; }
+    .sidebar { width: 220px; background: #fff; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 24px 0; position: fixed; height: 100vh; z-index: 200; overflow-y: auto; }
+    body.dark .sidebar { background: #202124; border-right-color: #303134; }
+    .sidebar-logo { text-align: center; padding: 0 20px 24px; border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+    body.dark .sidebar-logo { border-bottom-color: #303134; }
+    .sidebar-logo .logo-icon {
+      width: 48px; height: 48px; margin: 0 auto;
+      border-radius: 14px; background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+      display: flex; align-items: center; justify-content: center; color: #c96e00;
+    }
+    body.dark .sidebar-logo .logo-icon { background: #2b2d31; color: #f5c36a; }
+    .sidebar-logo h6 { font-size: 13px; font-weight: 700; color: #e07b00; margin-top: 6px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; cursor: pointer; color: #666; font-size: 14px; font-weight: 500; text-decoration: none; transition: all 0.2s; border-left: 3px solid transparent; }
+    .nav-item:hover, .nav-item.active { background: #fff5ea; color: #e07b00; border-left-color: #e07b00; }
+    body.dark .nav-item { color: #9aa0a6; }
+    body.dark .nav-item:hover, body.dark .nav-item.active { background: #2b2d31; color: #f0c040; border-left-color: #f0c040; }
+    .sidebar-footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid #f0f0f0; }
+    body.dark .sidebar-footer { border-top-color: #303134; }
+    .logout-btn { display: flex; align-items: center; gap: 10px; color: #e53935; font-size: 14px; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; }
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 150; }
+    body.dark .topbar { background: #202124; border-bottom-color: #303134; }
+    .topbar h5 { font-size: 17px; font-weight: 700; color: #2c2c2c; margin: 0; }
+    body.dark .topbar h5 { color: #e8eaed; }
+    .dark-toggle {
+      width: 40px; height: 40px; border-radius: 12px; border: 1px solid #eee;
+      background: #fff; color: #666; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    body.dark .dark-toggle { background: #2b2d31; border-color: #303134; color: #e8eaed; }
+    .nav-icon, .ui-icon, .logo-icon svg {
+      width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9;
+      stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+    }
+    .nav-icon-slot {
+      width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-icon svg { width: 24px; height: 24px; }
+    .content { padding: 28px 28px 40px; flex: 1; overflow-y: auto; }
+    .card-box { background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    body.dark .card-box { background: #202124; }
+    .form-label { font-weight: 600; font-size: 13px; }
+    .form-control, .form-select { border: 1.5px solid #eee; border-radius: 8px; font-size: 14px; padding: 10px 14px; }
+    body.dark .form-control, body.dark .form-select { background: #2b2d31; border-color: #303134; color: #e8eaed; }
+    .btn-orange { background: #e07b00; color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-weight: 600; }
+    .btn-orange:hover { background: #c96e00; color: #fff; }
+    table { font-size: 14px; }
+    thead { background: #2c2c2c; color: #fff; }
+    body.dark thead { background: #26282c; }
+    .action-btn { border: none; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .tab-btn-selected { background: #e65100 !important; color: #fff !important; }
+    .btn-edit   { background: #fff3e0; color: #e07b00; }
+    .btn-delete { background: #fce4ec; color: #c62828; margin-left: 6px; }
+    .btn-edit:hover   { background: #e07b00; color: #fff; }
+    .btn-delete:hover { background: #c62828; color: #fff; }
+
+    /* Inline edit drawer */
+    .drawer-row td { padding: 0 !important; border: none !important; }
+    .drawer-inner {
+      margin: 0 0 2px 0;
+      padding: 0;
+      background: #fff;
+      border-top: 2px solid #e07b00;
+      border-bottom: 2px solid #f0e0c0;
+      box-shadow: 0 4px 16px rgba(224,123,0,0.08);
+      animation: drawerSlide 0.18s ease;
+      overflow: hidden;
+    }
+    @keyframes drawerSlide { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+    .drawer-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 24px 12px;
+      background: linear-gradient(90deg, #fff8f0, #fff);
+      border-bottom: 1px solid #f5e8d0;
+    }
+    .drawer-header-icon { font-size:18px; }
+    .drawer-title { font-size:14px; font-weight:700; color:#c96e00; letter-spacing:.2px; }
+    .drawer-badge {
+      margin-left:auto; font-size:11px; font-weight:700; padding:3px 10px;
+      border-radius:20px; background:#fff3e0; color:#e07b00;
+    }
+    .drawer-body { padding: 18px 24px 16px; }
+    .drawer-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 0; margin-bottom: 18px;
+      border: 1px solid #f0e0c0; border-radius: 10px; overflow: hidden;
+    }
+    .drawer-field {
+      display: flex; flex-direction: column; gap: 4px;
+      padding: 12px 16px; background: #fffaf4;
+      border-right: 1px solid #f0e0c0; border-bottom: 1px solid #f0e0c0;
+    }
+    .drawer-field:nth-child(3n) { border-right: none; }
+    .drawer-field:nth-child(4), .drawer-field:nth-child(5), .drawer-field:nth-child(6) { border-bottom: none; }
+    .drawer-field label { font-size:10px; font-weight:700; color:#b0a090; text-transform:uppercase; letter-spacing:.6px; }
+    .drawer-field span { font-size:13px; color:#333; font-weight:600; }
+    body.dark .drawer-inner { background:#181a1b; border-top-color:#f5a623; border-bottom-color:#303134; }
+    body.dark .drawer-header { background: linear-gradient(90deg,#26282c,#202124); border-bottom-color:#303134; }
+    body.dark .drawer-field { background:#242628; border-color:#303134; }
+    body.dark .drawer-field span { color:#e8eaed; }
+    .drawer-footer {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 24px;
+      background: #fafafa;
+      border-top: 1px solid #f0e0c0;
+    }
+    .drawer-footer label { font-size:12px; font-weight:700; color:#555; white-space:nowrap; }
+    .drawer-select {
+      border: 1.5px solid #ddd; border-radius:8px; padding:8px 14px;
+      font-size:13px; font-weight:600; color:#333; background:#fff;
+      cursor:pointer; outline:none; min-width:160px;
+      transition: border-color 0.2s;
+    }
+    .drawer-select:focus { border-color:#e07b00; }
+    body.dark .drawer-select { background:#242628; color:#e8eaed; border-color:#303134; }
+    .drawer-save {
+      background:#e07b00; color:#fff; border:none; border-radius:8px;
+      padding:9px 22px; font-size:13px; font-weight:700; cursor:pointer;
+      letter-spacing:.2px; transition: background 0.15s;
+    }
+    .drawer-save:hover { background:#c96e00; }
+    .drawer-cancel-btn {
+      background:transparent; color:#888; border:1.5px solid #ddd; border-radius:8px;
+      padding:8px 16px; font-size:13px; font-weight:600; cursor:pointer;
+      transition: all 0.15s;
+    }
+    .drawer-cancel-btn:hover { background:#f5f5f5; color:#333; border-color:#bbb; }
+
+    /* ── Customer edit drawer extras ── */
+    .edit-section-title {
+      font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;
+      color:#e07b00;margin:0 0 10px;padding-bottom:6px;border-bottom:2px solid #fff3e0;
+    }
+    .edit-section { margin-bottom:18px; }
+    .field-grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px; }
+    .field-grid-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px; }
+    .field-full { margin-bottom:10px; }
+    .ef-label { font-size:10px;font-weight:700;color:#b0a090;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:4px; }
+    .ef-input {
+      width:100%;border:1.5px solid #ddd;border-radius:8px;padding:8px 12px;
+      font-size:13px;font-weight:600;color:#333;background:#fff;outline:none;
+      transition:border-color .2s;box-sizing:border-box;
+    }
+    .ef-input:focus { border-color:#e07b00; }
+    .ef-readonly { background:#f9f9f9;color:#999;cursor:not-allowed; }
+    body.dark .ef-input { background:#242628;color:#e8eaed;border-color:#303134; }
+    body.dark .ef-readonly { background:#16181a;color:#80868b; }
+
+    /* dish rows */
+    .dish-row {
+      display:flex;align-items:center;gap:10px;padding:9px 0;
+      border-bottom:1px solid #f5f5f5;
+    }
+    .dish-row:last-child { border-bottom:none; }
+    .dish-name { flex:1;font-size:13px;font-weight:600;color:#333; }
+    .dish-price { font-size:11px;color:#aaa;margin-top:2px; }
+    .dish-subtotal { font-size:12px;font-weight:700;color:#e07b00;min-width:70px;text-align:right; }
+    body.dark .dish-name { color:#e8eaed; }
+    .qty-btn {
+      width:28px;height:28px;border-radius:50%;border:1.5px solid #eee;
+      background:#fff;font-size:16px;cursor:pointer;line-height:1;
+      display:flex;align-items:center;justify-content:center;font-weight:700;
+      transition:all .15s;flex-shrink:0;
+    }
+    .qty-btn:hover { background:#e07b00;color:#fff;border-color:#e07b00; }
+    .qty-display { font-size:14px;font-weight:700;min-width:22px;text-align:center; }
+    .remove-dish-btn {
+      background:#fce4ec;color:#c62828;border:none;border-radius:6px;
+      padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;flex-shrink:0;
+    }
+    .remove-dish-btn:hover { background:#c62828;color:#fff; }
+    .add-dish-row { display:flex;gap:8px;align-items:center;margin-top:10px; }
+    .add-dish-select {
+      flex:1;border:1.5px solid #ddd;border-radius:8px;padding:8px 12px;
+      font-size:13px;background:#fff;outline:none;
+    }
+    .add-dish-select:focus { border-color:#e07b00; }
+    body.dark .add-dish-select { background:#242628;color:#e8eaed;border-color:#303134; }
+    .add-dish-btn {
+      background:#e07b00;color:#fff;border:none;border-radius:8px;
+      padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;
+    }
+    .add-dish-btn:hover { background:#c96e00; }
+    .running-total {
+      display:flex;justify-content:space-between;align-items:center;
+      padding:12px 16px;background:#fff8f0;border-radius:8px;
+      font-size:14px;font-weight:700;color:#e07b00;margin-bottom:10px;
+    }
+
+    /* countdown badge */
+    .countdown-badge {
+      display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;
+      border-radius:20px;margin-left:6px;vertical-align:middle;
+    }
+    .badge-warn { background:#fff3e0;color:#e07b00; }
+    .badge-danger { background:#fce4ec;color:#c62828; }
+    .badge-locked { background:#ffebee;color:#b71c1c; }
+    .btn-cancel-request { background: #fff0f0; color: #c62828; }
+    .btn-cancel-request:hover { background: #c62828; color: #fff; }
+    .cancel-window { display: block; margin-top: 6px; color: #777; font-size: 11px; }
+    .detail-muted { color: #999; font-size: 12px; }
+    body.dark .cancel-window, body.dark .detail-muted { color: #aaa; }
+    .toast-msg {
+      position: fixed; bottom: 28px; right: 28px;
+      background: #2e7d32; color: #fff;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      z-index: 9999; display: none;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><span id="logo-icon-slot"></span></div>
+    <h6>CATERING BILLING</h6>
+  </div>
+  <a href="dashboard.html" class="nav-item"><span class="nav-icon-slot" data-icon="home"></span><span>Dashboard</span></a>
+  <a href="customers.html" class="nav-item"><span class="nav-icon-slot" data-icon="user"></span><span>Customers</span></a>
+  <a href="menu.html"      class="nav-item"><span class="nav-icon-slot" data-icon="menu"></span><span>Menu Items</span></a>
+  <a href="orders.html"    class="nav-item active"><span class="nav-icon-slot" data-icon="clipboard"></span><span>Orders</span></a>
+  <a href="payments.html"  class="nav-item"><span class="nav-icon-slot" data-icon="card"></span><span>Payments</span></a>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logout()"><span class="nav-icon-slot" data-icon="logout"></span><span>Logout</span></button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h5><span style="display:inline-flex;align-items:center;gap:10px;"><span class="nav-icon-slot" data-icon="clipboard"></span><span>Order Management</span></span></h5>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="dark-toggle" onclick="toggleDark()">
+        <span id="dark-icon"></span>
+      </button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="topbar-avatar" style="
+          width:34px;height:34px;border-radius:50%;
+          background:#e07b00;color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          font-size:15px;font-weight:700;">A
+        </div>
+        <div>
+          <div id="topbar-user"
+               style="font-size:14px;font-weight:600;line-height:1.2">
+          </div>
+          <span id="topbar-role"
+                style="font-size:10px;font-weight:700;
+                       padding:2px 8px;border-radius:20px;
+                       text-transform:uppercase;letter-spacing:0.5px;">
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- END TOPBAR -->
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- FORM -->
+    <!-- TABLE -->
+    <div class="card-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
+        <h6 class="fw-bold mb-0">Order Management</h6>
+        <div id="archive-tabs" style="display:none;gap:6px;display:flex">
+          <button id="tab-btn-active" class="action-btn tab-btn-selected" onclick="showTab('active')" style="font-size:13px">📋 Active Orders</button>
+          <button id="tab-btn-archived" class="action-btn" onclick="showTab('archived')" style="font-size:13px;background:#fff3e0;color:#e65100">🗄️ Archives</button>
+        </div>
+      </div>
+
+      <!-- ACTIVE ORDERS -->
+      <div id="tab-active">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>ID</th><th>Customer</th><th>Order Date</th>
+                <th>Event Date</th><th>Event Address</th><th>Pax</th><th>Total</th>
+                <th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="order-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ARCHIVED ORDERS (admin/staff only) -->
+      <div id="tab-archived" style="display:none">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>ID</th><th>Customer</th><th>Order Date</th>
+                <th>Event Date</th><th>Event Address</th><th>Pax</th><th>Total</th>
+                <th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="archived-orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <!-- END CONTENT -->
+
+</div>
+<!-- END MAIN -->
+
+<div class="toast-msg" id="toast"></div>
+
+<script>
+const API      = 'http://127.0.0.1:5000';
+const role     = localStorage.getItem('role');
+const username = localStorage.getItem('username') || '';
+const custId   = localStorage.getItem('customer_id');
+let orderCache = [];
+let cancelTimerId = null;
+
+const ICONS = {
+  sun: '<svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"></path></svg>',
+  moon: '<svg class="ui-icon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg>',
+  tray: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 15h18"></path><path d="M5 15a7 7 0 0 1 14 0"></path><path d="M8 10V8a4 4 0 0 1 8 0v2"></path></svg>',
+  home: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>',
+  user: '<svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>',
+  menu: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M4.5 7.5h15"></path><path d="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5Z"></path><path d="M7.5 12h9"></path><path d="M7.5 16.5h6"></path></svg>',
+  clipboard: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="4" rx="1.5"></rect><path d="M8 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"></path></svg>',
+  card: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"></rect><path d="M2.5 10h19"></path><path d="M6.5 15h4"></path><path d="M17 15h.01"></path></svg>',
+  logout: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>'
+};
+function icon(name) { return ICONS[name] || ''; }
+function applyStaticIcons() {
+  document.getElementById('logo-icon-slot').innerHTML = icon('tray');
+  document.querySelectorAll('.nav-icon-slot').forEach(node => {
+    node.innerHTML = icon(node.dataset.icon);
+  });
+}
+
+if (!role || !username) window.location.href = 'login.html';
+applyStaticIcons();
+
+// topbar
+document.getElementById('topbar-user').textContent   = username;
+document.getElementById('topbar-avatar').textContent = username.charAt(0).toUpperCase();
+const roleEl = document.getElementById('topbar-role');
+roleEl.textContent = role;
+const roleStyles = {
+  admin:    'background:#fff3e0;color:#e07b00;',
+  staff:    'background:#e3f2fd;color:#1565c0;',
+  customer: 'background:#e8f5e9;color:#2e7d32;'
+};
+roleEl.style.cssText += roleStyles[role] || 'background:#f5f5f5;color:#666;';
+
+// hide add form for customer
+if (role === 'customer') {
+  const af = document.getElementById('add-form'); if (af) af.style.display = 'none';
+  const nc = document.querySelector('a[href="customers.html"]');
+  if (nc) nc.innerHTML = `<span class="nav-icon-slot" data-icon="user">${icon('user')}</span><span>My Profile</span>`;
+}
+
+if (role === 'admin' || role === 'staff') {
+  const tabsEl = document.getElementById('archive-tabs');
+  if (tabsEl) tabsEl.style.display = 'flex';
+}
+if (role === 'customer') {
+  const tabsEl = document.getElementById('archive-tabs');
+  if (tabsEl) tabsEl.style.display = 'flex';
+}
+
+// limit status options for staff
+if (role === 'staff') {
+  const statusEl = document.getElementById('status');
+  if (statusEl) [...statusEl.options].forEach(opt => {
+    if (opt.value === 'Completed' || opt.value === 'Cancelled') {
+      opt.remove();
+    }
+  });
+}
+
+function statusBadge(status) {
+  const map = {
+    Pending:   '#fff3e0|#e07b00',
+    Quoted:    '#f3e5f5|#6a1b9a',
+    Confirmed: '#e3f2fd|#1565c0',
+    Completed: '#e8f5e9|#2e7d32',
+    Cancelled: '#fce4ec|#c62828'
+  };
+  const [bg, color] = (map[status] || '#f5f5f5|#666').split('|');
+  return `<span class="status-pill status-${String(status || '').toLowerCase()}" style="background:${bg};color:${color};
+                        padding:3px 10px;border-radius:20px;
+                        font-size:11px;font-weight:600">${status}</span>`;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatRemaining(seconds) {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  const mins = Math.floor(safeSeconds / 60);
+  const secs = safeSeconds % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
+function cancelActionHtml(order) {
+  if (role !== 'customer') return '';
+
+  if (order.CanRequestCancel) {
+    const remaining = Number(order.CancelWindowSecondsRemaining || 0);
+    return `
+      <button class="action-btn btn-cancel-request" onclick="requestCancel(${order.OrderID})">
+        Request Cancel
+      </button>
+      <span class="cancel-window" data-cancel-seconds="${remaining}">
+        ${formatRemaining(remaining)} left
+      </span>`;
+  }
+
+  if (order.Status === 'Pending' || order.Status === 'Quoted') {
+    return '<span class="detail-muted">Cancel window closed</span>';
+  }
+
+  return '<span class="detail-muted">View only</span>';
+}
+
+function startCancelTimers() {
+  if (cancelTimerId) clearInterval(cancelTimerId);
+
+  const tick = () => {
+    let expired = false;
+    document.querySelectorAll('[data-cancel-seconds]').forEach(el => {
+      const next = Math.max(0, Number(el.dataset.cancelSeconds || 0) - 1);
+      el.dataset.cancelSeconds = next;
+      el.textContent = `${formatRemaining(next)} left`;
+      if (next <= 0) expired = true;
+    });
+
+    if (expired) {
+      clearInterval(cancelTimerId);
+      cancelTimerId = null;
+      loadOrders();
+    }
+  };
+
+  if (document.querySelector('[data-cancel-seconds]')) {
+    cancelTimerId = setInterval(tick, 1000);
+  }
+}
+
+function scopedUrl(path) {
+  const params = new URLSearchParams();
+  params.set('role', role);
+  if (role === 'customer') {
+    params.set('customer_id', custId || '');
+  }
+  return `${API}${path}?${params.toString()}`;
+}
+
+async function loadCustomerOptions() {
+  if (role === 'customer') return;
+  const sel = document.getElementById('customer-select');
+  if (!sel) return; // form removed — skip
+  const res  = await fetch(`${API}/customers`);
+  const data = await res.json();
+  data.forEach(c => {
+    sel.innerHTML += `<option value="${c.CustomerID}">${c.FirstName} ${c.LastName}</option>`;
+  });
+}
+
+async function loadOrders() {
+  const res  = await fetch(scopedUrl('/orders'));
+  const data = await res.json();
+  orderCache = Array.isArray(data) ? data : [];
+  const tbody = document.getElementById('order-table');
+  tbody.innerHTML = '';
+  if (cancelTimerId) {
+    clearInterval(cancelTimerId);
+    cancelTimerId = null;
+  }
+
+  if (orderCache.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted py-4">No orders yet</td></tr>';
+    return;
+  }
+
+  orderCache.forEach(o => {
+    const canEdit   = role === 'admin' || role === 'staff';
+    const canDelete = role === 'admin';
+
+    const eventDate   = new Date(o.EventDate);
+    const today       = new Date();
+    today.setHours(0,0,0,0);
+    const daysUntil   = Math.ceil((eventDate - today) / (1000 * 60 * 60 * 24));
+    const canEditDishes = role === 'customer' && o.Status === 'Confirmed' && daysUntil > 2;
+    const editingLocked = role === 'customer' && o.Status === 'Confirmed' && daysUntil <= 2;
+
+    // Countdown badge
+    let countdownBadge = '';
+    if (role === 'customer' && o.Status === 'Confirmed') {
+      if (daysUntil <= 0) {
+        countdownBadge = `<span class="countdown-badge badge-locked">🔒 Editing closed</span>`;
+      } else if (daysUntil <= 2) {
+        countdownBadge = `<span class="countdown-badge badge-danger">🔒 Last day to edit</span>`;
+      } else if (daysUntil <= 7) {
+        countdownBadge = `<span class="countdown-badge badge-warn">⚠️ Closes in ${daysUntil} days</span>`;
+      }
+    }
+
+    const editDishesBtn = canEditDishes
+      ? `<button class="action-btn btn-edit" onclick="openInlineEdit(${o.OrderID})" style="margin-bottom:4px">✏️ Edit Order</button><br>`
+      : editingLocked
+        ? `<button class="action-btn" disabled style="margin-bottom:4px;opacity:.45;cursor:not-allowed;background:#f5f5f5;color:#aaa">🔒 Editing Closed</button><br>`
+        : '';
+    const viewDishesBtn = role === 'customer'
+      ? `<button class="action-btn" onclick="viewDishes(${o.OrderID})"
+           style="background:#e8f5e9;color:#2e7d32;margin-bottom:4px">View Dishes</button><br>`
+      : '';
+
+    // Build row via DOM
+    const tr = document.createElement('tr');
+    tr.id = `order-row-${o.OrderID}`;
+    tr.innerHTML = `
+        <td>${o.OrderID}</td>
+        <td>${o.FirstName} ${o.LastName}</td>
+        <td>${o.OrderDate}</td>
+        <td>${o.EventDate}${countdownBadge}</td>
+        <td>${escapeHtml(o.EventAddress || '')}</td>
+        <td>${o.Pax}</td>
+        <td>₱${parseFloat(o.TotalAmount).toFixed(2)}</td>
+        <td>${statusBadge(o.Status)}</td>
+        <td>
+          ${canEdit   ? `<button class="action-btn btn-edit" onclick="editOrder(${o.OrderID})">✏️ Edit</button>` : ''}
+          ${canDelete ? `<button class="action-btn btn-delete" onclick="deleteOrder(${o.OrderID})">🗄️ Archive</button>` : ''}
+          ${!canEdit && !canDelete ? viewDishesBtn + editDishesBtn + cancelActionHtml(o) : ''}
+        </td>`;
+    tbody.appendChild(tr);
+  });
+  startCancelTimers();
+}
+
+let activeDrawerOrderId = null;
+
+async function editOrder(id) {
+  const order = orderCache.find(o => Number(o.OrderID) === Number(id));
+  if (!order) return;
+
+  clearForm();
+  if (activeDrawerOrderId === id) { activeDrawerOrderId = null; return; }
+  activeDrawerOrderId = id;
+
+  const statuses = role === 'staff'
+    ? ['Pending','Confirmed']
+    : ['Pending','Confirmed','Completed','Cancelled'];
+
+  const statusOptions = statuses.map(s =>
+    `<option value="${s}" ${order.Status === s ? 'selected' : ''}>${s}</option>`
+  ).join('');
+
+  // Fetch dishes for this order
+  let dishesHtml = '<div style="font-size:12px;color:#aaa;padding:6px 0">Loading dishes...</div>';
+  const row = document.getElementById(`order-row-${id}`);
+
+  const drawerHtml = `
+    <tr class="drawer-row" id="drawer-row-${id}">
+      <td colspan="9">
+        <div class="drawer-inner">
+          <div class="drawer-header">
+            <span class="drawer-header-icon">✏️</span>
+            <span class="drawer-title">Order #${order.OrderID}</span>
+            <span class="drawer-badge">${order.Status}</span>
+          </div>
+          <div class="drawer-body">
+            <div class="drawer-grid">
+              <div class="drawer-field"><label>Customer</label><span>${escapeHtml(order.FirstName + ' ' + order.LastName)}</span></div>
+              <div class="drawer-field"><label>Order Date</label><span>${order.OrderDate || '—'}</span></div>
+              <div class="drawer-field"><label>Event Date</label><span>${order.EventDate || '—'}</span></div>
+              <div class="drawer-field"><label>Event Address</label><span>${escapeHtml(order.EventAddress || '—')}</span></div>
+              <div class="drawer-field"><label>No. of Pax</label><span>${order.Pax}</span></div>
+              <div class="drawer-field"><label>Total Amount</label><span>₱${parseFloat(order.TotalAmount).toFixed(2)}</span></div>
+            </div>
+            <!-- Dishes section -->
+            <div style="margin-top:14px;">
+              <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#e07b00;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #fff3e0;">Ordered Dishes</div>
+              <div id="drawer-dishes-${id}" style="font-size:12px;color:#aaa;">Loading...</div>
+            </div>
+          </div>
+          <div class="drawer-footer">
+            <label>Update Status:</label>
+            <select id="drawer-status-${id}" class="drawer-select">${statusOptions}</select>
+            <button class="drawer-save" onclick="saveOrder(${id})">💾 Save Changes</button>
+            <button class="drawer-cancel-btn" onclick="clearForm()">✖ Cancel</button>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+
+  if (row) row.insertAdjacentHTML('afterend', drawerHtml);
+
+  // Load dishes after drawer is in DOM
+  try {
+    const res   = await fetch(`${API}/orders/${id}/items`);
+    const items = await res.json();
+    const el    = document.getElementById(`drawer-dishes-${id}`);
+    if (!el) return;
+    if (!items.length) {
+      el.innerHTML = '<span style="color:#aaa">No dishes recorded.</span>';
+      return;
+    }
+    el.innerHTML = `
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#fffaf4;">
+            <th style="padding:7px 12px;text-align:left;font-weight:700;color:#b0a090;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0e0c0;">Dish</th>
+            <th style="padding:7px 12px;text-align:left;font-weight:700;color:#b0a090;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0e0c0;">Category</th>
+            <th style="padding:7px 12px;text-align:center;font-weight:700;color:#b0a090;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0e0c0;">Qty</th>
+            <th style="padding:7px 12px;text-align:right;font-weight:700;color:#b0a090;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0e0c0;">Pricing</th>
+            <th style="padding:7px 12px;text-align:right;font-weight:700;color:#b0a090;font-size:10px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #f0e0c0;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(i => {
+            const sub = orderLineTotal(i, order.Pax);
+            return `<tr style="border-bottom:1px solid #f9f9f9;">
+              <td style="padding:8px 12px;font-weight:600;color:#333">${i.ItemName}</td>
+              <td style="padding:8px 12px;color:#888">${i.Category}</td>
+              <td style="padding:8px 12px;text-align:center;font-weight:600">${i.Quantity}</td>
+              <td style="padding:8px 12px;text-align:right;color:#666">${orderPricingLabel(i)}</td>
+              <td style="padding:8px 12px;text-align:right;font-weight:700;color:#e07b00">${formatMoney(sub)}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) {
+    const el = document.getElementById(`drawer-dishes-${id}`);
+    if (el) el.innerHTML = '<span style="color:#c62828">Could not load dishes.</span>';
+  }
+}
+
+async function saveOrder(id) {
+  const selectEl = document.getElementById(`drawer-status-${id}`);
+  if (!selectEl) return;
+  const status = selectEl.value;
+  const saveButton = document.querySelector(`#drawer-row-${id} .drawer-save, #drawer-edit-${id} .drawer-save`);
+  window.AppUI?.setButtonLoading(saveButton, true, 'Saving');
+
+  try {
+    const res = await fetch(`${API}/orders/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Status: status, _role: role, _customer_id: custId })
+    });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      window.AppUI?.setButtonLoading(saveButton, false);
+      showToast(data.message || 'Could not update order.', '#c62828');
+      return;
+    }
+
+    activeDrawerOrderId = null;
+    showToast(data.message || `Order status changed to ${status}.`);
+    loadOrders();
+  } catch (e) {
+    window.AppUI?.setButtonLoading(saveButton, false);
+    showToast('Could not update order. Please try again.', '#c62828');
+  }
+}
+
+function formatMoney(value) {
+  return '₱' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function orderLineTotal(item, pax) {
+  if (typeof item.line_total !== 'undefined') return Number(item.line_total || 0);
+  const price = Number(item.PricePerPax || 0);
+  if ((item.pricing_type || 'per_pax') === 'flat_rate') return price * Number(item.Quantity || 0);
+  return price * Number(pax || 0) * Number(item.Quantity || 0);
+}
+
+function orderPricingLabel(item) {
+  if ((item.pricing_type || 'per_pax') === 'flat_rate') return `${formatMoney(item.PricePerPax)} flat`;
+  return `${formatMoney(item.PricePerPax)}/pax`;
+}
+
+function orderBreakdownLabel(item, pax) {
+  if (item.line_breakdown) return item.line_breakdown;
+  const total = orderLineTotal(item, pax);
+  if ((item.pricing_type || 'per_pax') === 'flat_rate') {
+    return `${formatMoney(item.PricePerPax)} × qty ${item.Quantity} = ${formatMoney(total)} (flat rate)`;
+  }
+  return `${formatMoney(item.PricePerPax)} × ${pax} pax × qty ${item.Quantity} = ${formatMoney(total)}`;
+}
+
+async function requestCancel(id) {
+  if (!confirm('Request cancellation for this order?')) return;
+
+  const res = await fetch(`${API}/orders/${id}/cancel`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      _role: role,
+      _customer_id: custId
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  showToast(
+    data.message || (res.ok ? 'Cancellation requested.' : 'Could not request cancellation.'),
+    res.ok ? '#2e7d32' : '#c62828'
+  );
+  loadOrders();
+}
+
+async function deleteOrder(id) {
+  if (!confirm('Archive this order? It will be moved to the Archives and can be restored by an admin.')) return;
+  const row = document.getElementById(`order-row-${id}`);
+  try {
+    const res = await fetch(`${API}/orders/${id}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast(data.message || 'Could not archive order.', '#c62828');
+      return;
+    }
+    await window.AppUI?.animateRemoval(row, 'app-removing-row');
+    clearForm();
+    showToast('Order archived successfully.', '#e65100');
+    loadOrders();
+  } catch (e) {
+    showToast('Could not archive order. Please try again.', '#c62828');
+  }
+}
+
+async function loadArchivedOrders() {
+  const tbody = document.getElementById('archived-orders-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px">Loading...</td></tr>';
+  try {
+    const params = new URLSearchParams({ role });
+    if (role === 'customer') {
+      params.set('customer_id', custId || '');
+    }
+    const res = await fetch(`${API}/orders/archived?${params.toString()}`);
+    const data = await res.json().catch(() => []);
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px">No archived orders.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(o => `
+      <tr>
+        <td>${o.OrderID}</td>
+        <td>${o.CustomerName || ''}</td>
+        <td>${o.OrderDate || ''}</td>
+        <td>${o.EventDate || ''}</td>
+        <td>${o.EventAddress || ''}</td>
+        <td>${o.Pax || ''}</td>
+        <td>₱${parseFloat(o.TotalAmount || 0).toFixed(2)}</td>
+        <td><span style="background:#eee;color:#666;border-radius:20px;padding:3px 10px;font-size:12px">${o.Status || ''}</span></td>
+        <td>
+          <small style="color:#aaa;display:block;margin-bottom:4px">${o.ArchivedAt ? 'Archived: ' + o.ArchivedAt.slice(0,10) : ''}</small>
+          ${role === 'admin' ? `<button class="action-btn" style="background:#e8f5e9;color:#2e7d32" onclick="restoreOrder(${o.OrderID})">↩ Restore</button>` : ''}
+        </td>
+      </tr>`).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#c62828;padding:24px">Failed to load archived orders.</td></tr>';
+  }
+}
+
+async function restoreOrder(id) {
+  if (!confirm('Restore this order back to the active list?')) return;
+  try {
+    const res = await fetch(`${API}/orders/${id}/restore`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ _role: role })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) { showToast(data.message || 'Could not restore.', '#c62828'); return; }
+    showToast('Order restored successfully.', '#2e7d32');
+    loadArchivedOrders();
+    loadOrders();
+  } catch (e) {
+    showToast('Could not restore order.', '#c62828');
+  }
+}
+
+function showTab(tab) {
+  document.getElementById('tab-active').style.display = tab === 'active' ? '' : 'none';
+  document.getElementById('tab-archived').style.display = tab === 'archived' ? '' : 'none';
+  document.getElementById('tab-btn-active').classList.toggle('tab-btn-selected', tab === 'active');
+  document.getElementById('tab-btn-archived').classList.toggle('tab-btn-selected', tab === 'archived');
+  if (tab === 'archived') loadArchivedOrders();
+}
+
+function clearForm() {
+  const existing = document.querySelector('.drawer-row');
+  if (existing) existing.remove();
+  activeDrawerOrderId = null;
+}
+
+function showToast(msg, color = '#2e7d32') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.style.background = color;
+  t.style.display = 'block';
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => {
+    t.classList.remove('show');
+    t.style.display = 'none';
+  }, 2400);
+}
+
+// ── VIEW DISHES ─────────────────────────────────────────────────
+async function viewDishes(orderId) {
+  const order = orderCache.find(o => o.OrderID === orderId);
+  document.getElementById('view-dishes-modal').style.display = 'flex';
+  document.getElementById('view-dishes-loading').style.display = 'block';
+  document.getElementById('view-dishes-body').style.display   = 'none';
+  document.getElementById('view-order-title').textContent =
+    `Order #${orderId} — ${order ? order.EventDate : ''} · ${order ? order.Pax : ''} pax`;
+
+  try {
+    const res   = await fetch(`${API}/orders/${orderId}/items?role=${role}&customer_id=${custId}`);
+    const items = await res.json();
+    const body  = document.getElementById('view-dishes-body');
+
+    if (!items.length) {
+      body.innerHTML = '<div style="text-align:center;color:#aaa;padding:24px">No dishes in this order yet.</div>';
+    } else {
+      let total = 0;
+      const pax = order ? order.Pax : 1;
+      body.innerHTML = items.map(i => {
+        const subtotal = orderLineTotal(i, pax);
+        total += subtotal;
+        return `
+          <div style="display:flex;justify-content:space-between;align-items:center;
+                      padding:10px 0;border-bottom:0.5px solid #f0f0f0">
+            <div>
+              <div style="font-size:13px;font-weight:600">${i.ItemName}</div>
+              <div style="font-size:11px;color:#aaa">${orderBreakdownLabel(i, pax)}</div>
+            </div>
+            <div style="font-size:13px;font-weight:700;color:#e07b00">
+              ${formatMoney(subtotal)}
+            </div>
+          </div>`;
+      }).join('');
+      body.innerHTML += `
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:14px 0 0;margin-top:4px">
+          <div style="font-size:13px;font-weight:700">Total Amount</div>
+          <div style="font-size:16px;font-weight:800;color:#e07b00">${formatMoney(total)}</div>
+        </div>`;
+    }
+
+    document.getElementById('view-dishes-loading').style.display = 'none';
+    document.getElementById('view-dishes-body').style.display    = 'block';
+  } catch(e) {
+    document.getElementById('view-dishes-loading').textContent = '❌ Could not load dishes.';
+  }
+}
+
+function closeViewDishesModal() {
+  document.getElementById('view-dishes-modal').style.display = 'none';
+}
+
+// ── EDIT DISHES MODAL (customer only) ──────────────────────────
+let editingOrderId = null;
+let allMenuItems   = [];
+let currentItems   = [];
+
+// ── INLINE EDIT DRAWER (customer) ──────────────────────────────
+async function openInlineEdit(orderId) {
+  const order = orderCache.find(o => Number(o.OrderID) === Number(orderId));
+  if (!order) return;
+
+  clearForm(); // close any open drawer
+  if (activeDrawerOrderId === orderId) { activeDrawerOrderId = null; return; }
+  activeDrawerOrderId = orderId;
+
+  // Fetch menu + current dishes
+  const [menuRes, itemsRes] = await Promise.all([
+    fetch(`${API}/menu-items`),
+    fetch(`${API}/orders/${orderId}/items?role=${role}&customer_id=${custId}`)
+  ]);
+  allMenuItems = (await menuRes.json()).filter(m => m.Available !== 0);
+  currentItems = await itemsRes.json();
+
+  const drawerRow = document.createElement('tr');
+  drawerRow.className = 'drawer-row';
+  drawerRow.id = `drawer-edit-${orderId}`;
+  drawerRow.innerHTML = `<td colspan="9"><div class="drawer-inner" id="drawer-inner-${orderId}"></div></td>`;
+
+  const row = document.getElementById(`order-row-${orderId}`);
+  if (row) row.insertAdjacentElement('afterend', drawerRow);
+
+  renderInlineEditor(orderId, order);
+}
+
+function renderInlineEditor(orderId, order) {
+  const container = document.getElementById(`drawer-inner-${orderId}`);
+  const pax = parseInt(document.getElementById(`ied-pax-${orderId}`)?.value || order.Pax);
+
+  // Compute running total
+  const total = currentItems.reduce((s, i) => s + orderLineTotal(i, pax), 0);
+
+  // Available dishes not yet in order
+  const addedIds   = currentItems.map(i => i.ItemID);
+  const available  = allMenuItems.filter(m => !addedIds.includes(m.ItemID));
+  const addOptions = available.map(m =>
+    `<option value="${m.ItemID}" data-price="${m.PricePerPax}" data-pricing-type="${m.pricing_type || 'per_pax'}" data-name="${m.ItemName.replace(/"/g,'&quot;')}">${m.ItemName} — ${orderPricingLabel(m)}</option>`
+  ).join('');
+
+  // Current dishes list
+  const dishRows = currentItems.length === 0
+    ? `<div style="padding:10px 0;color:#aaa;font-size:13px;text-align:center">No dishes added yet. Add at least one.</div>`
+    : currentItems.map(i => {
+        const sub = orderLineTotal(i, pax);
+        return `
+          <div class="dish-row">
+            <div style="flex:1">
+              <div class="dish-name">${i.ItemName}</div>
+              <div class="dish-price">${orderBreakdownLabel(i, pax)}</div>
+            </div>
+            <button class="qty-btn" onclick="cQty(${orderId},${i.ItemID},-1)">−</button>
+            <span class="qty-display">${i.Quantity}</span>
+            <button class="qty-btn" onclick="cQty(${orderId},${i.ItemID},1)">+</button>
+            <div class="dish-subtotal">${formatMoney(sub)}</div>
+            <button class="remove-dish-btn" onclick="removeDish(${orderId},${i.ItemID})">✕ Remove</button>
+          </div>`;
+      }).join('');
+
+  container.innerHTML = `
+    <div class="drawer-header">
+      <span style="font-size:18px">✏️</span>
+      <span class="drawer-title">Edit Order #${orderId}</span>
+      <span class="drawer-badge">${order.Status}</span>
+    </div>
+    <div class="drawer-body">
+
+      <!-- Section 1: Event Details -->
+      <div class="edit-section">
+        <div class="edit-section-title">📍 Event Details</div>
+        <div class="field-grid-3">
+          <div>
+            <label class="ef-label">Order # (read-only)</label>
+            <input class="ef-input ef-readonly" value="${orderId}" disabled>
+          </div>
+          <div>
+            <label class="ef-label">Order Date (read-only)</label>
+            <input class="ef-input ef-readonly" value="${order.OrderDate}" disabled>
+          </div>
+          <div>
+            <label class="ef-label">Event Date *</label>
+            <input type="date" id="ied-eventdate-${orderId}" class="ef-input"
+              value="${order.EventDate || ''}" min="${minEventDate()}">
+          </div>
+        </div>
+        <div class="field-grid-2">
+          <div>
+            <label class="ef-label">No. of Pax *</label>
+            <input type="number" id="ied-pax-${orderId}" class="ef-input"
+              value="${pax}" min="1"
+              oninput="renderInlineEditor(${orderId}, getOrderFromCache(${orderId}))"
+              onchange="renderInlineEditor(${orderId}, getOrderFromCache(${orderId}))">
+          </div>
+          <div>
+            <label class="ef-label">Event Address / Venue *</label>
+            <input type="text" id="ied-address-${orderId}" class="ef-input"
+              value="${(order.EventAddress||'').replace(/"/g,'&quot;')}" placeholder="Event location">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Current Dishes -->
+      <div class="edit-section">
+        <div class="edit-section-title">Dishes (${currentItems.length} item${currentItems.length!==1?'s':''})</div>
+        <div id="dish-list-${orderId}">${dishRows}</div>
+      </div>
+
+      <!-- Section 3: Add a Dish -->
+      <div class="edit-section">
+        <div class="edit-section-title">➕ Add a Dish</div>
+        ${available.length === 0
+          ? `<div style="font-size:12px;color:#aaa">All available dishes are already added.</div>`
+          : `<div class="add-dish-row">
+               <select id="add-dish-sel-${orderId}" class="add-dish-select">
+                 <option value="">— Select a dish —</option>
+                 ${addOptions}
+               </select>
+               <button class="add-dish-btn" onclick="addDish(${orderId})">+ Add</button>
+             </div>`
+        }
+      </div>
+
+      <!-- Running Total -->
+      <div class="running-total">
+        <span>Running Total (${pax} pax)</span>
+        <span id="running-total-${orderId}">${formatMoney(total)}</span>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="drawer-save" onclick="saveInlineEdit(${orderId})">💾 Save All Changes</button>
+      <button class="drawer-cancel-btn" onclick="clearForm()">✖ Cancel</button>
+    </div>`;
+}
+
+function minEventDate() {
+  const d = new Date(); d.setDate(d.getDate() + 3);
+  return d.toISOString().split('T')[0];
+}
+function getOrderFromCache(id) { return orderCache.find(o => Number(o.OrderID) === Number(id)); }
+
+function cQty(orderId, itemId, delta) {
+  const item = currentItems.find(i => i.ItemID === itemId);
+  if (!item) return;
+  item.Quantity = Math.max(1, item.Quantity + delta);
+  renderInlineEditor(orderId, getOrderFromCache(orderId));
+}
+
+function removeDish(orderId, itemId) {
+  if (currentItems.length <= 1) { alert('At least one dish is required.'); return; }
+  currentItems = currentItems.filter(i => i.ItemID !== itemId);
+  renderInlineEditor(orderId, getOrderFromCache(orderId));
+}
+
+function addDish(orderId) {
+  const sel  = document.getElementById(`add-dish-sel-${orderId}`);
+  if (!sel || !sel.value) return;
+  const id    = parseInt(sel.value);
+  const price = parseFloat(sel.options[sel.selectedIndex].dataset.price);
+  const pricingType = sel.options[sel.selectedIndex].dataset.pricingType;
+  const name  = sel.options[sel.selectedIndex].dataset.name;
+  if (!currentItems.find(i => i.ItemID === id)) {
+    currentItems.push({ ItemID: id, Quantity: 1, ItemName: name, PricePerPax: price, pricing_type: pricingType });
+  }
+  renderInlineEditor(orderId, getOrderFromCache(orderId));
+}
+
+async function saveInlineEdit(orderId) {
+  const eventDate = document.getElementById(`ied-eventdate-${orderId}`)?.value;
+  const pax       = parseInt(document.getElementById(`ied-pax-${orderId}`)?.value);
+  const address   = document.getElementById(`ied-address-${orderId}`)?.value?.trim();
+  const saveButton = document.querySelector(`#drawer-edit-${orderId} .drawer-save`);
+
+  // Validate event date is at least 3 days from today
+  if (!eventDate) { window.AppUI?.shakeInvalid([`ied-eventdate-${orderId}`]); alert('Please enter an event date.'); return; }
+  const today = new Date(); today.setHours(0,0,0,0);
+  const evDate = new Date(eventDate);
+  const diff = Math.ceil((evDate - today) / 86400000);
+  if (diff < 3) { window.AppUI?.shakeInvalid([`ied-eventdate-${orderId}`]); alert('Event date must be at least 3 days from today.'); return; }
+  if (!pax || pax < 1) { window.AppUI?.shakeInvalid([`ied-pax-${orderId}`]); alert('No. of Pax must be at least 1.'); return; }
+  if (!address) { window.AppUI?.shakeInvalid([`ied-address-${orderId}`]); alert('Please enter an event address.'); return; }
+  if (currentItems.length === 0) { alert('At least one dish is required.'); return; }
+
+  const total = currentItems.reduce((s, i) => s + orderLineTotal(i, pax), 0);
+  window.AppUI?.setButtonLoading(saveButton, true, 'Saving');
+
+  // Save event details
+  const detailsRes = await fetch(`${API}/orders/${orderId}/details`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ EventDate: eventDate, Pax: pax, EventAddress: address, _role: role, _customer_id: custId })
+  });
+  if (!detailsRes.ok) { const d = await detailsRes.json(); window.AppUI?.setButtonLoading(saveButton, false); alert(d.message || 'Error saving details'); return; }
+
+  // Save dishes
+  const dishesRes = await fetch(`${API}/orders/${orderId}/dishes`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items: currentItems.map(i => ({ ItemID: i.ItemID, Quantity: i.Quantity })), _role: role, _customer_id: custId })
+  });
+  if (!dishesRes.ok) { const d = await dishesRes.json(); window.AppUI?.setButtonLoading(saveButton, false); alert(d.message || 'Error saving dishes'); return; }
+
+  showToast('✅ Order updated successfully!');
+  clearForm();
+  loadOrders();
+}
+
+// kept for compat
+function openEditDishesModal(orderId) { openInlineEdit(orderId); }
+function closeEditDishesModal() { clearForm(); }
+
+// ── LOGOUT ──────────────────────────────────────────────────────
+function logout() {
+  if (confirm('Logout?')) { localStorage.clear(); window.location.href = 'login.html'; }
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  document.getElementById('dark-icon').innerHTML =
+    document.body.classList.contains('dark') ? icon('sun') : icon('moon');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+}
+
+window.onload = () => {
+  document.getElementById('dark-icon').innerHTML = icon('moon');
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
+    document.getElementById('dark-icon').innerHTML = icon('sun');
+  }
+  loadCustomerOptions();
+  loadOrders();
+};
+</script>
+<!-- ── VIEW DISHES MODAL ── -->
+<div id="view-dishes-modal" style="display:none;position:fixed;inset:0;z-index:2000;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:20px;width:480px;max-width:95vw;
+              max-height:85vh;display:flex;flex-direction:column;
+              box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+
+    <!-- Header -->
+    <div style="padding:20px 24px 16px;border-bottom:1px solid #f0f0f0;
+                display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:16px;font-weight:800;color:#2c2c2c">My Order Dishes</div>
+        <div id="view-order-title" style="font-size:11px;color:#aaa;margin-top:2px"></div>
+      </div>
+      <button onclick="closeViewDishesModal()"
+        style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa">✕</button>
+    </div>
+
+    <!-- Loading -->
+    <div id="view-dishes-loading"
+         style="padding:40px;text-align:center;color:#aaa;font-size:13px">
+      ⏳ Loading dishes...
+    </div>
+
+    <!-- Dish list -->
+    <div id="view-dishes-body"
+         style="display:none;overflow-y:auto;padding:8px 24px 16px;flex:1"></div>
+
+    <!-- Footer -->
+    <div style="padding:16px 24px;border-top:1px solid #f0f0f0">
+      <button onclick="closeViewDishesModal()"
+        style="width:100%;padding:11px;border:1.5px solid #eee;border-radius:9px;
+               background:#fff;font-size:13px;font-weight:700;cursor:pointer;color:#666">
+        Close
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Dark mode for view modal -->
+<style>
+  body.dark #view-dishes-modal > div { background:#202124; }
+  body.dark #view-dishes-body { color:#e8eaed; }
+  body.dark #view-order-title { color:#9aa0a6; }
+</style>
+
+<script src="settings.js"></script>
+</body>
+</html>

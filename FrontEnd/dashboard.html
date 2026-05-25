@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard — Catering Billing System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    (function () {
+      const size = Number(localStorage.getItem('fontSize'));
+      const resolved = [13, 15, 17, 19].includes(size) ? size : 15;
+      document.documentElement.style.fontSize = '15px';
+      document.documentElement.style.zoom = String(resolved / 15);
+    })();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; display: flex; min-height: 100vh; }
+    body.dark { background: #181a1b; color: #e8eaed; }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar { width: 220px; background: #fff; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 24px 0; position: fixed; height: 100vh; z-index: 200; overflow-y: auto; }
+    body.dark .sidebar { background: #202124; border-right-color: #303134; }
+    .sidebar-logo { text-align: center; padding: 0 20px 24px; border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+    body.dark .sidebar-logo { border-bottom-color: #303134; }
+    .sidebar-logo .logo-icon {
+      width: 48px; height: 48px; margin: 0 auto;
+      border-radius: 14px; background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+      display: flex; align-items: center; justify-content: center; color: #c96e00;
+    }
+    body.dark .sidebar-logo .logo-icon { background: #2b2d31; color: #f5c36a; }
+    .sidebar-logo h6 { font-size: 13px; font-weight: 700; color: #e07b00; margin-top: 6px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; cursor: pointer; color: #666; font-size: 14px; font-weight: 500; text-decoration: none; transition: all 0.2s; border-left: 3px solid transparent; }
+    .nav-item:hover, .nav-item.active { background: #fff5ea; color: #e07b00; border-left-color: #e07b00; }
+    body.dark .nav-item { color: #aaa; }
+    body.dark .nav-item:hover, body.dark .nav-item.active { background: #2b2d31; color: #f0c040; border-left-color: #f0c040; }
+    .sidebar-footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid #f0f0f0; }
+    body.dark .sidebar-footer { border-top-color: #303134; }
+    .logout-btn { display: flex; align-items: center; gap: 10px; color: #e53935; font-size: 14px; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; }
+
+    /* ══ LAYOUT ══ */
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .body-row { display: flex; flex: 1; min-height: 0; }
+    .content-area { flex: 1; min-width: 0; padding: 28px 28px 40px; overflow-y: auto; }
+    .right-panel { width: 300px; min-width: 300px; background: #fff; border-left: 1px solid #eee; padding: 24px 20px; overflow-y: auto; position: sticky; top: 0; max-height: calc(100vh - 65px); }
+    body.dark .right-panel { background: #202124; border-left-color: #303134; }
+
+    /* ══ TOPBAR ══ */
+    .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 150; }
+    body.dark .topbar { background: #202124; border-bottom-color: #303134; }
+    .topbar h5 { font-size: 17px; font-weight: 700; color: #2c2c2c; margin: 0; }
+    body.dark .topbar h5 { color: #e8eaed; }
+    .dark-toggle {
+      width: 40px; height: 40px; border-radius: 12px; border: 1px solid #eee;
+      background: #fff; color: #666; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    body.dark .dark-toggle { background: #2b2d31; border-color: #303134; color: #e8eaed; }
+    .nav-icon, .ui-icon, .banner-icon svg, .logo-icon svg {
+      width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9;
+      stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+    }
+    .nav-icon-slot {
+      width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-icon svg { width: 24px; height: 24px; }
+    .banner-icon {
+      width: 72px; height: 72px; border-radius: 20px;
+      background: rgba(255,255,255,0.16); display: flex; align-items: center; justify-content: center;
+      color: #fff; opacity: 0.96;
+    }
+    .banner-icon svg { width: 34px; height: 34px; }
+
+    /* ══ WELCOME BANNER ══ */
+    .welcome-banner { background: linear-gradient(135deg, #e07b00, #f5a623); border-radius: 16px; padding: 26px 30px; color: #fff; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
+    .welcome-banner h4 { font-size: 21px; font-weight: 700; margin-bottom: 4px; }
+    .welcome-banner p  { font-size: 13px; opacity: 0.9; margin: 0; }
+
+    /* ══ STATS CARDS ══ */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 14px; padding: 18px 20px; display: flex; align-items: center; gap: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); transition: transform 0.2s; }
+    .stat-card:hover { transform: translateY(-3px); }
+    body.dark .stat-card { background: #202124; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #2c2c2c; flex-shrink: 0; }
+    .stat-icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+    .icon-orange { background: #fff3e0; }
+    .icon-blue   { background: #e3f2fd; }
+    .icon-green  { background: #e8f5e9; }
+    .icon-red    { background: #fce4ec; }
+    .icon-purple { background: #f3e5f5; }
+    .icon-orange { color: #c96e00; }
+    .icon-blue { color: #1565c0; }
+    .icon-green { color: #2e7d32; }
+    .icon-red { color: #c62828; }
+    .icon-purple { color: #7b1fa2; }
+    .stat-info h3 { font-size: 22px; font-weight: 700; color: #2c2c2c; margin: 0; line-height: 1.1; }
+    body.dark .stat-info h3 { color: #e8eaed; }
+    .stat-info p { font-size: 11px; color: #999; margin: 3px 0 0; }
+
+    /* ══ SECTION HEADER ══ */
+    .sec-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .sec-title { font-size: 15px; font-weight: 700; color: #2c2c2c; }
+    body.dark .sec-title { color: #e8eaed; }
+
+    /* ══ INCOME BAR ══ */
+    .income-bar-card { background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    body.dark .income-bar-card { background: #202124; }
+    .income-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+    .income-label { font-size: 12px; font-weight: 600; width: 110px; color: #666; flex-shrink: 0; }
+    body.dark .income-label { color: #9aa0a6; }
+    .income-track { flex: 1; height: 12px; background: #f0f0f0; border-radius: 20px; overflow: hidden; }
+    body.dark .income-track { background: #303134; }
+    .income-fill { height: 100%; border-radius: 20px; transition: width 0.8s ease; }
+    .income-amt { font-size: 12px; font-weight: 700; width: 90px; text-align: right; flex-shrink: 0; }
+
+    /* ══ MOST ORDERED DISHES ══ */
+    .dishes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .dish-card { background: #fff; border-radius: 12px; padding: 14px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    body.dark .dish-card { background: #202124; }
+    .dish-photo {
+      width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; object-fit: cover;
+      display: block; margin-bottom: 10px; background: #f5f5f5;
+    }
+    .dish-photo-fallback {
+      width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; margin-bottom: 10px;
+      background: linear-gradient(135deg, #fff4e6, #ffe7c2);
+      color: #c96e00; display: flex; align-items: center; justify-content: center;
+    }
+    body.dark .dish-photo-fallback { background: #2b2d31; color: #f5c36a; }
+    .dish-photo-fallback svg { width: 28px; height: 28px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .dish-name { font-size: 12px; font-weight: 700; color: #2c2c2c; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body.dark .dish-name { color: #e8eaed; }
+    .dish-count { font-size: 11px; color: #999; }
+    .dish-badge { font-size: 9px; font-weight: 700; padding: 2px 7px; border-radius: 20px; background: #fff3e0; color: #e07b00; display: inline-block; margin-top: 5px; }
+    body.dark .dish-badge { background: #2a1f00; color: #f5a623; }
+
+    /* ══ CHART ══ */
+    .chart-card { background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    body.dark .chart-card { background: #202124; }
+    .chart-canvas-wrap { position: relative; height: 220px; }
+
+    /* ══ RECENT ORDERS TABLE ══ */
+    .table-card { background: #fff; border-radius: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); overflow: hidden; margin-bottom: 24px; }
+    body.dark .table-card { background: #202124; }
+    .table-card table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .table-card thead th { background: #2c2c2c; color: #fff; padding: 10px 14px; font-weight: 600; font-size: 12px; text-align: left; }
+    .table-card tbody td { padding: 10px 14px; border-bottom: 1px solid #f0f0f0; color: #444; }
+    body.dark .table-card tbody td { border-bottom-color: #303134; color: #bdc1c6; }
+    .table-card tbody tr:last-child td { border-bottom: none; }
+    .table-card tbody tr:hover td { background: #fafafa; }
+    body.dark .table-card tbody tr:hover td { background: #2a2d32; }
+    .status-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; display: inline-block; }
+
+    /* ══ ORDER TRACKER (customer) ══ */
+    .tracker-card { background: #fff; border-radius: 14px; padding: 18px 22px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    body.dark .tracker-card { background: #202124; }
+    .tracker-order { margin-bottom: 20px; }
+    .tracker-order:last-child { margin-bottom: 0; }
+    .tracker-label { font-size: 12px; font-weight: 700; color: #2c2c2c; margin-bottom: 8px; }
+    body.dark .tracker-label { color: #e8eaed; }
+    .tracker-steps { display: flex; align-items: center; gap: 0; }
+    .tracker-step { display: flex; flex-direction: column; align-items: center; flex: 1; }
+    .step-dot { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; border: 2px solid #ddd; background: #fff; color: #bbb; z-index: 1; }
+    body.dark .step-dot { background: #181a1b; border-color: #3c4043; }
+    .step-dot.done { background: #e07b00; border-color: #e07b00; color: #fff; }
+    .step-dot.active { background: #fff3e0; border-color: #e07b00; color: #e07b00; }
+    body.dark .step-dot.active { background: #2a1f00; }
+    .step-label { font-size: 9px; font-weight: 600; color: #aaa; margin-top: 4px; text-align: center; }
+    .step-label.done, .step-label.active { color: #e07b00; }
+    .step-line { flex: 1; height: 2px; background: #eee; margin-top: -14px; }
+    body.dark .step-line { background: #3c4043; }
+    .step-line.done { background: #e07b00; }
+
+    /* ══ PENDING NOTE ══ */
+    .pending-note { background: #fff8e1; border: 1px solid #ffe082; border-radius: 10px; padding: 14px 18px; font-size: 13px; color: #795548; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px; }
+    body.dark .pending-note { background: #2a1f00; border-color: #5a4000; color: #ffd54f; }
+    .pending-note .note-icon { width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* ══ RIGHT PANEL WIDGETS ══ */
+    .rp-section { margin-bottom: 24px; }
+    .rp-title { font-size: 14px; font-weight: 700; color: #2c2c2c; margin-bottom: 14px; }
+    body.dark .rp-title { color: #e8eaed; }
+
+    /* Tabs */
+    .rp-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+    .rp-tab { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; cursor: pointer; border: 1px solid #e07b00; color: #e07b00; background: transparent; transition: all 0.2s; }
+    .rp-tab.active { background: #e07b00; color: #fff; }
+    body.dark .rp-tab { border-color: #f5a623; color: #f5a623; }
+    body.dark .rp-tab.active { background: #f5a623; color: #181a1b; }
+
+    /* Selling items list */
+    .selling-item { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid #f5f5f5; }
+    body.dark .selling-item { border-bottom-color: #303134; }
+    .selling-item:last-child { border-bottom: none; }
+    .selling-rank { width: 22px; height: 22px; border-radius: 50%; background: #fff3e0; color: #e07b00; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    body.dark .selling-rank { background: #2a1f00; }
+    .selling-thumb {
+      width: 34px; height: 34px; border-radius: 10px; object-fit: cover; background: #f5f5f5; flex-shrink: 0;
+    }
+    .selling-thumb-fallback {
+      width: 34px; height: 34px; border-radius: 10px; background: #fff4e6; color: #c96e00;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    body.dark .selling-thumb-fallback { background: #2b2d31; color: #f5c36a; }
+    .selling-thumb-fallback svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .selling-name { flex: 1; font-size: 12px; font-weight: 600; color: #2c2c2c; }
+    body.dark .selling-name { color: #e8eaed; }
+    .selling-count { font-size: 11px; font-weight: 700; color: #e07b00; }
+
+    /* Status breakdown */
+    .status-row { margin-bottom: 10px; }
+    .status-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+    .status-row-label { font-size: 12px; font-weight: 600; color: #444; }
+    body.dark .status-row-label { color: #bdc1c6; }
+    .status-row-count { font-size: 12px; font-weight: 700; }
+    .status-bar-track { height: 7px; background: #f0f0f0; border-radius: 20px; overflow: hidden; }
+    body.dark .status-bar-track { background: #303134; }
+    .status-bar-fill { height: 100%; border-radius: 20px; transition: width 0.8s ease; }
+
+    /* Payment summary (customer right panel) */
+    .pay-summary-item { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid #f5f5f5; font-size: 13px; }
+    body.dark .pay-summary-item { border-bottom-color: #303134; }
+    .pay-summary-item:last-child { border-bottom: none; }
+    .pay-summary-item .psi-label { color: #666; }
+    body.dark .pay-summary-item .psi-label { color: #9aa0a6; }
+    .pay-summary-item .psi-val { font-weight: 700; color: #2c2c2c; }
+    body.dark .pay-summary-item .psi-val { color: #e8eaed; }
+
+    /* Upcoming events */
+    .event-item { padding: 10px 12px; border-radius: 10px; background: #fff5ea; margin-bottom: 8px; }
+    body.dark .event-item { background: #2a1f00; }
+    .event-date { font-size: 10px; font-weight: 700; color: #e07b00; text-transform: uppercase; letter-spacing: 0.5px; }
+    .event-name { font-size: 12px; font-weight: 600; color: #2c2c2c; margin-top: 2px; }
+    body.dark .event-name { color: #e8eaed; }
+    .event-pax { font-size: 11px; color: #999; }
+
+    /* Tip box */
+    .tip-box { background: #e3f2fd; border-left: 3px solid #1565c0; border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #1565c0; margin-top: 12px; }
+    body.dark .tip-box { background: #1f2a33; border-left-color: #7aa7d9; color: #a9c8eb; }
+
+    /* Divider */
+    .rp-divider { border: none; border-top: 1px solid #f0f0f0; margin: 20px 0; }
+    body.dark .rp-divider { border-top-color: #303134; }
+
+    /* Toast */
+    .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast-item { background: #2c2c2c; color: #fff; padding: 12px 18px; border-radius: 10px; font-size: 13px; font-weight: 500; box-shadow: 0 4px 20px rgba(0,0,0,0.25); animation: slideUp 0.3s ease; display: flex; align-items: center; gap: 10px; }
+    .toast-item.success { border-left: 4px solid #43a047; }
+    .toast-item.error   { border-left: 4px solid #e53935; }
+    .toast-item.info    { border-left: 4px solid #e07b00; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Skeleton loader */
+    .skeleton { background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; border-radius: 6px; height: 14px; display: block; }
+    body.dark .skeleton { background: linear-gradient(90deg,#303134 25%,#3c4043 50%,#303134 75%); background-size: 200% 100%; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+    /* Responsive */
+    @media (max-width: 1100px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .right-panel { display: none; }
+    }
+    @media (max-width: 800px) {
+      .sidebar { transform: translateX(-220px); }
+      .main { margin-left: 0; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ TOAST CONTAINER ══ -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><span id="logo-icon-slot"></span></div>
+    <h6>CATERING BILLING</h6>
+  </div>
+  <a href="dashboard.html" class="nav-item active"><span class="nav-icon-slot" data-icon="home"></span><span>Dashboard</span></a>
+  <a href="customers.html" class="nav-item" id="nav-customers"><span class="nav-icon-slot" data-icon="user"></span><span>Customers</span></a>
+  <a href="menu.html"      class="nav-item"><span class="nav-icon-slot" data-icon="menu"></span><span>Menu Items</span></a>
+  <a href="orders.html"    class="nav-item"><span class="nav-icon-slot" data-icon="clipboard"></span><span>Orders</span></a>
+  <a href="payments.html"  class="nav-item"><span class="nav-icon-slot" data-icon="card"></span><span>Payments</span></a>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logout()"><span class="nav-icon-slot" data-icon="logout"></span><span>Logout</span></button>
+  </div>
+</div>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h5 id="page-title"><span style="display:inline-flex;align-items:center;gap:10px;"><span class="nav-icon-slot" data-icon="chart"></span><span>Dashboard</span></span></h5>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="dark-toggle" onclick="toggleDark()"><span id="dark-icon"></span></button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="topbar-avatar" style="width:34px;height:34px;border-radius:50%;background:#e07b00;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">A</div>
+        <div>
+          <div id="topbar-user" style="font-size:14px;font-weight:600;line-height:1.2;color:#2c2c2c;"></div>
+          <span id="topbar-role" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="body-row">
+    <!-- ══ CENTER CONTENT ══ -->
+    <div class="content-area">
+
+      <!-- WELCOME BANNER -->
+      <div class="welcome-banner">
+        <div>
+          <h4 id="welcome-text">Welcome back!</h4>
+          <p id="welcome-sub">Here's what's happening with your catering business today.</p>
+        </div>
+        <div class="banner-icon" id="banner-icon"></div>
+      </div>
+
+      <!-- STATS ROW -->
+      <div class="stats-row" id="stats-row">
+        <!-- injected by JS -->
+        <div class="stat-card"><div class="stat-icon icon-orange"><span class="skeleton" style="width:22px;height:22px;border-radius:50%"></span></div><div class="stat-info"><span class="skeleton" style="width:60px;height:22px;margin-bottom:4px"></span><span class="skeleton" style="width:80px;height:11px"></span></div></div>
+        <div class="stat-card"><div class="stat-icon icon-blue"><span class="skeleton" style="width:22px;height:22px;border-radius:50%"></span></div><div class="stat-info"><span class="skeleton" style="width:60px;height:22px;margin-bottom:4px"></span><span class="skeleton" style="width:80px;height:11px"></span></div></div>
+        <div class="stat-card"><div class="stat-icon icon-red"><span class="skeleton" style="width:22px;height:22px;border-radius:50%"></span></div><div class="stat-info"><span class="skeleton" style="width:60px;height:22px;margin-bottom:4px"></span><span class="skeleton" style="width:80px;height:11px"></span></div></div>
+        <div class="stat-card"><div class="stat-icon icon-green"><span class="skeleton" style="width:22px;height:22px;border-radius:50%"></span></div><div class="stat-info"><span class="skeleton" style="width:60px;height:22px;margin-bottom:4px"></span><span class="skeleton" style="width:80px;height:11px"></span></div></div>
+      </div>
+
+      <!-- INCOME VS EXPENSE BAR (admin/staff only) -->
+      <div id="income-section" style="display:none;">
+        <div class="income-bar-card">
+          <div class="sec-header">
+            <span class="sec-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="coins"></span><span>Income vs Outstanding</span></span></span>
+            <span style="font-size:11px;color:#aaa;" id="income-meta"></span>
+          </div>
+          <div class="income-row">
+            <span class="income-label">Total Collected</span>
+            <div class="income-track"><div class="income-fill" id="fill-collected" style="background:#43a047;width:0%"></div></div>
+            <span class="income-amt" style="color:#43a047;" id="amt-collected">₱0</span>
+          </div>
+          <div class="income-row">
+            <span class="income-label">Total Ordered</span>
+            <div class="income-track"><div class="income-fill" id="fill-ordered" style="background:#e07b00;width:0%"></div></div>
+            <span class="income-amt" style="color:#e07b00;" id="amt-ordered">₱0</span>
+          </div>
+          <div class="income-row" style="margin-bottom:0">
+            <span class="income-label">Outstanding</span>
+            <div class="income-track"><div class="income-fill" id="fill-outstanding" style="background:#e53935;width:0%"></div></div>
+            <span class="income-amt" style="color:#e53935;" id="amt-outstanding">₱0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MOST ORDERED DISHES -->
+      <div id="dishes-section">
+        <div class="sec-header">
+          <span class="sec-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="tray"></span><span>Most Ordered Dishes</span></span></span>
+          <span style="font-size:11px;color:#aaa;">By order frequency</span>
+        </div>
+        <div class="dishes-grid" id="dishes-grid">
+          <p class="text-muted" style="font-size:13px;">Loading dishes…</p>
+        </div>
+      </div>
+
+      <!-- CHART — admin/staff only -->
+      <div id="chart-section" style="display:none;">
+        <div class="sec-header" style="margin-top:4px;">
+          <span class="sec-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="trend"></span><span>Monthly Revenue</span></span></span>
+          <span style="font-size:11px;color:#aaa;">Last 12 months</span>
+        </div>
+        <div class="chart-card">
+          <div class="chart-canvas-wrap">
+            <canvas id="revenue-chart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ORDER TRACKER — customer only -->
+      <div id="tracker-section" style="display:none;">
+        <div class="sec-header">
+          <span class="sec-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="tracker"></span><span>Order Status Tracker</span></span></span>
+        </div>
+        <div class="tracker-card" id="tracker-list">
+          <p class="text-muted" style="font-size:13px;">Loading your orders…</p>
+        </div>
+      </div>
+
+      <!-- RECENT ORDERS TABLE -->
+      <div class="sec-header">
+        <span class="sec-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="clock"></span><span>Recent Orders</span></span></span>
+        <a href="orders.html" style="font-size:12px;color:#e07b00;text-decoration:none;font-weight:600;">View all →</a>
+      </div>
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Event Date</th>
+              <th>Pax</th>
+              <th>Total</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="recent-orders-body">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa;font-size:13px;">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div><!-- /content-area -->
+
+    <!-- ══ RIGHT PANEL ══ -->
+    <div class="right-panel" id="right-panel">
+
+      <!-- ADMIN / STAFF: Most Selling Items -->
+      <div class="rp-section" id="rp-selling">
+        <div class="rp-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="award"></span><span>Most Selling Items</span></span></div>
+        <div class="rp-tabs">
+          <button class="rp-tab active" onclick="switchTab(this,'monthly')">Monthly</button>
+          <button class="rp-tab" onclick="switchTab(this,'weekly')">Weekly</button>
+        </div>
+        <div id="selling-list">
+          <p class="text-muted" style="font-size:12px;">Loading…</p>
+        </div>
+      </div>
+
+      <hr class="rp-divider">
+
+      <!-- Order Status Breakdown -->
+      <div class="rp-section" id="rp-status-breakdown">
+        <div class="rp-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="chart"></span><span>Order Status Breakdown</span></span></div>
+        <div id="status-breakdown-list">
+          <p class="text-muted" style="font-size:12px;">Loading…</p>
+        </div>
+      </div>
+
+      <!-- CUSTOMER: Payment Summary (hidden by default) -->
+      <div class="rp-section" id="rp-payment-summary" style="display:none;">
+        <div class="rp-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="card"></span><span>Payment Summary</span></span></div>
+        <div id="pay-summary-list">
+          <p class="text-muted" style="font-size:12px;">Loading…</p>
+        </div>
+      </div>
+
+      <hr class="rp-divider" id="rp-divider-cust" style="display:none;">
+
+      <!-- CUSTOMER: Upcoming Events -->
+      <div class="rp-section" id="rp-upcoming" style="display:none;">
+        <div class="rp-title"><span style="display:inline-flex;align-items:center;gap:8px;"><span class="nav-icon-slot" data-icon="calendar"></span><span>My Upcoming Events</span></span></div>
+        <div id="upcoming-list">
+          <p class="text-muted" style="font-size:12px;">Loading…</p>
+        </div>
+        <div class="tip-box" id="pending-tip" style="display:none;">
+          <span style="display:inline-flex;align-items:flex-start;gap:8px;"><span class="nav-icon-slot" data-icon="info"></span><span><strong>Tip:</strong> You have a pending order. Our team will review and confirm it shortly.</span></span>
+        </div>
+      </div>
+
+    </div><!-- /right-panel -->
+  </div><!-- /body-row -->
+</div><!-- /main -->
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   CONSTANTS & HELPERS
+════════════════════════════════════════════════════════════════ */
+const API      = 'http://127.0.0.1:5000';
+const role     = localStorage.getItem('role');
+const username = localStorage.getItem('username');
+const custId   = localStorage.getItem('customer_id');
+let menuItemsCache = [];
+let menuItemLookup = new Map();
+
+if (!role || !username) window.location.href = 'login.html';
+
+const ICONS = {
+  sun: '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"></path></svg>',
+  moon: '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg>',
+  home: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>',
+  user: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>',
+  users: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 19a4.5 4.5 0 0 0-9 0"></path><circle cx="12" cy="9" r="3"></circle><path d="M19 19a3.5 3.5 0 0 0-3-3.46"></path><path d="M16 5.5a3 3 0 0 1 0 5.99"></path></svg>',
+  menu: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7.5h15"></path><path d="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5Z"></path><path d="M7.5 12h9"></path><path d="M7.5 16.5h6"></path></svg>',
+  clipboard: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="4" width="10" height="4" rx="1.5"></rect><path d="M8 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"></path></svg>',
+  card: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5"></rect><path d="M2.5 10h19"></path><path d="M6.5 15h4"></path><path d="M17 15h.01"></path></svg>',
+  logout: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>',
+  chart: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10"></path><path d="M10 20V4"></path><path d="M16 20v-7"></path><path d="M22 20V8"></path></svg>',
+  coins: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="6.5" ry="3"></ellipse><path d="M5.5 6v6c0 1.66 2.91 3 6.5 3s6.5-1.34 6.5-3V6"></path><path d="M5.5 12v6c0 1.66 2.91 3 6.5 3s6.5-1.34 6.5-3v-6"></path></svg>',
+  tray: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 15h18"></path><path d="M5 15a7 7 0 0 1 14 0"></path><path d="M8 10V8a4 4 0 0 1 8 0v2"></path></svg>',
+  trend: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16l5-5 4 4 7-8"></path><path d="M14 7h6v6"></path></svg>',
+  tracker: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h4l2-4 4 8 2-4h4"></path></svg>',
+  clock: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
+  award: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M8.5 12.5 7 21l5-3 5 3-1.5-8.5"></path></svg>',
+  calendar: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>',
+  info: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 10v6"></path><path d="M12 7h.01"></path></svg>',
+  crown: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m4 18 1.5-9 5 4 1.5-6 1.5 6 5-4L20 18Z"></path><path d="M4 18h16"></path></svg>',
+  chef: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 10a4 4 0 1 1 8 0"></path><path d="M6 11h12v3a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4Z"></path><path d="M9 18v2M15 18v2"></path></svg>',
+  spark: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.7 5.3L19 10l-5.3 1.7L12 17l-1.7-5.3L5 10l5.3-1.7Z"></path></svg>',
+  money: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"></rect><circle cx="12" cy="12" r="3"></circle><path d="M7 10h.01M17 14h.01"></path></svg>',
+  pending: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg>',
+  photo: '<svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><circle cx="9" cy="10" r="1.5"></circle><path d="m21 16-5-5-7 7"></path></svg>'
+};
+
+function icon(name) {
+  return ICONS[name] || '';
+}
+
+function applyStaticIcons() {
+  document.getElementById('logo-icon-slot').innerHTML = icon('tray');
+  document.querySelectorAll('.nav-icon-slot').forEach(node => {
+    node.innerHTML = icon(node.dataset.icon);
+  });
+}
+
+// Topbar
+document.getElementById('topbar-user').textContent   = username;
+document.getElementById('topbar-avatar').textContent = username.charAt(0).toUpperCase();
+document.getElementById('welcome-text').textContent  = `Welcome back, ${username}!`;
+
+const roleEl = document.getElementById('topbar-role');
+roleEl.textContent = role;
+const roleStyles = {
+  admin:    'background:#fff3e0;color:#e07b00;',
+  staff:    'background:#e3f2fd;color:#1565c0;',
+  customer: 'background:#e8f5e9;color:#2e7d32;'
+};
+roleEl.style.cssText += roleStyles[role] || 'background:#f5f5f5;color:#666;';
+
+// Dark mode text fix
+document.getElementById('topbar-user').style.color = document.body.classList.contains('dark') ? '#f0f0f0' : '#2c2c2c';
+
+// Sidebar visibility
+if (role === 'customer') {
+  const nc = document.getElementById('nav-customers');
+  nc.innerHTML = `<span class="nav-icon-slot" data-icon="user">${icon('user')}</span><span>My Profile</span>`;
+  nc.href = 'customers.html';
+}
+function formatDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+}
+function formatPeso(v) {
+  return '₱' + parseFloat(v||0).toLocaleString('en-PH', { minimumFractionDigits:2 });
+}
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+function statusStyle(s) {
+  const map = {
+    Pending:   { bg:'#fff3e0', color:'#e07b00' },
+    Quoted:    { bg:'#f3e5f5', color:'#7b1fa2' },
+    Confirmed: { bg:'#e3f2fd', color:'#1565c0' },
+    Completed: { bg:'#e8f5e9', color:'#2e7d32' },
+    Cancelled: { bg:'#fce4ec', color:'#c62828' }
+  };
+  return map[s] || { bg:'#f5f5f5', color:'#666' };
+}
+function showToast(msg, type='info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast-item ${type}`;
+  t.innerHTML = `${icon(type==='success' ? 'award' : type==='error' ? 'pending' : 'info')}<span>${escapeHtml(msg)}</span>`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function normalizeImagePath(path) {
+  if (!path) return null;
+  const raw = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
+  return raw.startsWith('static/uploads/dishes/') ? raw : `static/uploads/dishes/${raw.split('/').pop()}`;
+}
+
+function getMenuItemPhoto(item) {
+  const paths = item?.all_photos?.length
+    ? item.all_photos
+    : [item?.image_path, ...(item?.photos || []).map(photo => photo.image_path)].filter(Boolean);
+  const normalized = [...new Set(paths.map(normalizeImagePath).filter(Boolean))];
+  return normalized.length ? `${API}/${normalized[0]}` : null;
+}
+
+function findMenuMetaByName(name) {
+  if (!name) return null;
+  const key = String(name).trim().toLowerCase();
+  return menuItemLookup.get(key) || null;
+}
+
+function dishPhotoMarkup(item, label) {
+  const url = item?.imageUrl || getMenuItemPhoto(item);
+  if (!url) return `<div class="dish-photo-fallback">${icon('photo')}</div>`;
+  return `<img class="dish-photo" src="${url}" alt="${escapeHtml(label)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="dish-photo-fallback" style="display:none">${icon('photo')}</div>`;
+}
+
+function sellingThumbMarkup(item, label) {
+  const url = item?.imageUrl || getMenuItemPhoto(item);
+  if (!url) return `<div class="selling-thumb-fallback">${icon('photo')}</div>`;
+  return `<img class="selling-thumb" src="${url}" alt="${escapeHtml(label)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="selling-thumb-fallback" style="display:none">${icon('photo')}</div>`;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DARK MODE
+════════════════════════════════════════════════════════════════ */
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  document.getElementById('dark-icon').innerHTML = icon(isDark ? 'sun' : 'moon');
+  document.getElementById('topbar-user').style.color = isDark ? '#f0f0f0' : '#2c2c2c';
+  localStorage.setItem('darkMode', isDark);
+  // Update chart if exists
+  if (window._revenueChart) updateChartTheme(window._revenueChart);
+}
+function logout() {
+  if (confirm('Are you sure you want to logout?')) {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
+}
+window.addEventListener('DOMContentLoaded', () => {
+  applyStaticIcons();
+  document.getElementById('dark-icon').innerHTML = icon('moon');
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
+    document.getElementById('dark-icon').innerHTML = icon('sun');
+    document.getElementById('topbar-user').style.color = '#f0f0f0';
+  }
+  // Route by role
+  if (role === 'customer') setupCustomer();
+  else if (role === 'staff') setupStaff();
+  else setupAdmin();
+});
+
+/* ════════════════════════════════════════════════════════════════
+   SHARED: BUILD RECENT ORDERS TABLE
+════════════════════════════════════════════════════════════════ */
+function renderRecentOrders(orders) {
+  const tbody = document.getElementById('recent-orders-body');
+  if (!orders.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:20px;color:#aaa;font-size:13px;">No orders found.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = orders.slice(0,5).map(o => {
+    const s = statusStyle(o.Status);
+    return `<tr>
+      <td><strong>#${o.OrderID}</strong></td>
+      <td>${o.CustomerName || o.customer_name || '—'}</td>
+      <td>${formatDate(o.EventDate)}</td>
+      <td>${o.Pax || '—'}</td>
+      <td>${formatPeso(o.TotalAmount)}</td>
+      <td><span class="status-badge" style="background:${s.bg};color:${s.color};">${o.Status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SHARED: RENDER DISHES GRID
+════════════════════════════════════════════════════════════════ */
+function renderDishesGrid(dishes) {
+  const grid = document.getElementById('dishes-grid');
+  if (!dishes.length) {
+    grid.innerHTML = `<p class="text-muted" style="font-size:13px;">No dish data available yet.</p>`;
+    return;
+  }
+  grid.innerHTML = dishes.slice(0,8).map(d => `
+    <div class="dish-card">
+      ${dishPhotoMarkup(d, d.name)}
+      <div class="dish-name" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</div>
+      <div class="dish-count">${d.count} order${d.count>1?'s':''}</div>
+      <span class="dish-badge">${escapeHtml(d.category || 'Main')}</span>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SHARED: REVENUE CHART
+════════════════════════════════════════════════════════════════ */
+function buildRevenueChart(orders) {
+  const monthMap = {};
+  orders.forEach(o => {
+    if (!o.OrderDate && !o.EventDate) return;
+    const d = new Date(o.OrderDate || o.EventDate);
+    if (isNaN(d)) return;
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    monthMap[key] = (monthMap[key]||0) + parseFloat(o.TotalAmount||0);
+  });
+  const sorted = Object.keys(monthMap).sort().slice(-12);
+  const labels = sorted.map(k => {
+    const [y,m] = k.split('-');
+    return new Date(+y, +m-1, 1).toLocaleDateString('en-PH',{month:'short',year:'2-digit'});
+  });
+  const data   = sorted.map(k => monthMap[k]);
+  const isDark = document.body.classList.contains('dark');
+  const ctx    = document.getElementById('revenue-chart').getContext('2d');
+  const chart  = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Revenue (₱)',
+        data,
+        borderColor: '#e07b00',
+        backgroundColor: 'rgba(224,123,0,0.08)',
+        tension: 0.4,
+        pointBackgroundColor: '#e07b00',
+        pointRadius: 4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: { label: ctx => '₱' + ctx.parsed.y.toLocaleString('en-PH',{minimumFractionDigits:2}) }
+        }
+      },
+      scales: {
+        x: { grid: { color: isDark?'#303134':'#f0f0f0' }, ticks: { color: isDark?'#9aa0a6':'#888', font:{size:11} } },
+        y: { grid: { color: isDark?'#303134':'#f0f0f0' }, ticks: { color: isDark?'#9aa0a6':'#888', font:{size:11},
+               callback: v => '₱'+v.toLocaleString() } }
+      }
+    }
+  });
+  window._revenueChart = chart;
+}
+function updateChartTheme(chart) {
+  const isDark = document.body.classList.contains('dark');
+  const gc = isDark ? '#303134' : '#f0f0f0';
+  const tc = isDark ? '#aaa' : '#888';
+  chart.options.scales.x.grid.color = gc;
+  chart.options.scales.y.grid.color = gc;
+  chart.options.scales.x.ticks.color = tc;
+  chart.options.scales.y.ticks.color = tc;
+  chart.update();
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SHARED: STATUS BREAKDOWN (right panel)
+════════════════════════════════════════════════════════════════ */
+function renderStatusBreakdown(orders) {
+  const counts = { Pending:0, Confirmed:0, Completed:0, Cancelled:0 };
+  orders.forEach(o => { if (counts[o.Status]!==undefined) counts[o.Status]++; });
+  const total = orders.length || 1;
+  const cfg = [
+    { key:'Pending', color:'#e07b00', label:'Pending' },
+    { key:'Confirmed', color:'#1565c0', label:'Confirmed' },
+    { key:'Completed', color:'#2e7d32', label:'Completed' },
+    { key:'Cancelled', color:'#c62828', label:'Cancelled' }
+  ];
+  document.getElementById('status-breakdown-list').innerHTML = cfg.map(c => `
+    <div class="status-row">
+      <div class="status-row-header">
+        <span class="status-row-label">${c.label}</span>
+        <span class="status-row-count" style="color:${c.color}">${counts[c.key]}</span>
+      </div>
+      <div class="status-bar-track">
+        <div class="status-bar-fill" style="background:${c.color};width:${(counts[c.key]/total*100).toFixed(1)}%"></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ADMIN SETUP
+════════════════════════════════════════════════════════════════ */
+async function setupAdmin() {
+  document.getElementById('welcome-sub').textContent = 'Full system overview — all data visible.';
+  document.getElementById('banner-icon').innerHTML = icon('crown');
+  document.getElementById('income-section').style.display = 'block';
+  document.getElementById('chart-section').style.display  = 'block';
+
+  renderStatsRow([
+    { icon:'money', cls:'icon-orange', id:'a-revenue', label:'Total Revenue' },
+    { icon:'clipboard', cls:'icon-blue', id:'a-orders', label:'Total Orders'  },
+    { icon:'pending', cls:'icon-red', id:'a-pending', label:'Pending Orders' },
+    { icon:'users', cls:'icon-green', id:'a-customers', label:'Total Customers'}
+  ]);
+
+  try {
+    const [custs, ords, pays] = await Promise.all([
+      fetch(`${API}/customers`).then(r=>r.json()),
+      fetch(`${API}/orders`).then(r=>r.json()),
+      fetch(`${API}/payments`).then(r=>r.json())
+    ]);
+    const totalPaid  = pays.reduce((s,p)=>s+parseFloat(p.AmountPaid||0),0);
+    const totalOwed  = ords.reduce((s,o)=>s+parseFloat(o.TotalAmount||0),0);
+    const outstanding= Math.max(0, totalOwed - totalPaid);
+
+    document.getElementById('a-revenue').textContent   = formatPeso(totalPaid);
+    document.getElementById('a-orders').textContent    = ords.length;
+    document.getElementById('a-pending').textContent   = ords.filter(o=>o.Status==='Pending').length;
+    document.getElementById('a-customers').textContent = custs.length;
+
+    // Income bar
+    renderIncomeBar(totalPaid, totalOwed, outstanding);
+    // Chart
+    buildRevenueChart(ords);
+    // Dishes
+    await loadAndRenderDishes(ords);
+    // Recent orders
+    renderRecentOrders(ords.slice().sort((a,b)=>b.OrderID-a.OrderID));
+    // Right panel
+    renderSellingItems(null, ords);
+    renderStatusBreakdown(ords);
+
+    document.getElementById('income-meta').textContent =
+      `${custs.length} customers · ${ords.length} total orders`;
+
+  } catch(e) {
+    showToast('Failed to load admin data', 'error');
+    console.error(e);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   STAFF SETUP
+════════════════════════════════════════════════════════════════ */
+async function setupStaff() {
+  document.getElementById('welcome-sub').textContent = "Here's today's catering overview.";
+  document.getElementById('banner-icon').innerHTML = icon('chef');
+  document.getElementById('income-section').style.display = 'block';
+  document.getElementById('chart-section').style.display  = 'block';
+
+  renderStatsRow([
+    { icon:'money', cls:'icon-orange', id:'s-revenue', label:'Total Revenue'  },
+    { icon:'clipboard', cls:'icon-blue', id:'s-orders', label:'Total Orders'   },
+    { icon:'pending', cls:'icon-red', id:'s-pending', label:'Pending Orders' },
+    { icon:'users', cls:'icon-green', id:'s-customers', label:'Total Customers' }
+  ]);
+
+  try {
+    const [custs, ords, pays] = await Promise.all([
+      fetch(`${API}/customers`).then(r=>r.json()),
+      fetch(`${API}/orders`).then(r=>r.json()),
+      fetch(`${API}/payments`).then(r=>r.json())
+    ]);
+    const totalPaid  = pays.reduce((s,p)=>s+parseFloat(p.AmountPaid||0),0);
+    const totalOwed  = ords.reduce((s,o)=>s+parseFloat(o.TotalAmount||0),0);
+
+    document.getElementById('s-revenue').textContent   = formatPeso(totalPaid);
+    document.getElementById('s-orders').textContent    = ords.length;
+    document.getElementById('s-pending').textContent   = ords.filter(o=>o.Status==='Pending').length;
+    document.getElementById('s-customers').textContent = custs.length;
+
+    renderIncomeBar(totalPaid, totalOwed, Math.max(0,totalOwed-totalPaid));
+    buildRevenueChart(ords);
+    await loadAndRenderDishes(ords);
+    renderRecentOrders(ords.slice().sort((a,b)=>b.OrderID-a.OrderID));
+    renderSellingItems(null, ords);
+    renderStatusBreakdown(ords);
+
+  } catch(e) {
+    showToast('Failed to load staff data', 'error');
+    console.error(e);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   CUSTOMER SETUP
+════════════════════════════════════════════════════════════════ */
+async function setupCustomer() {
+  document.getElementById('welcome-sub').textContent  = "Here's a summary of your catering bookings.";
+  document.getElementById('banner-icon').innerHTML  = icon('spark');
+  document.getElementById('tracker-section').style.display = 'block';
+
+  // Swap right panel content
+  document.getElementById('rp-selling').style.display  = 'none';
+  document.getElementById('rp-status-breakdown').style.display = 'none';
+  document.getElementById('rp-payment-summary').style.display  = 'block';
+  document.getElementById('rp-divider-cust').style.display     = 'block';
+  document.getElementById('rp-upcoming').style.display         = 'block';
+
+  renderStatsRow([
+    { icon:'clipboard', cls:'icon-blue', id:'c-orders', label:'My Orders'  },
+    { icon:'pending', cls:'icon-red', id:'c-pending', label:'Pending'      },
+    { icon:'money', cls:'icon-green', id:'c-paid', label:'Total Paid'      },
+    { icon:'calendar', cls:'icon-purple', id:'c-next', label:'Next Event'  }
+  ]);
+
+  try {
+    const ordUrl = custId ? `${API}/orders?customer_id=${custId}` : `${API}/orders`;
+    const payUrl = custId ? `${API}/payments?customer_id=${custId}` : `${API}/payments`;
+    const [ords, pays] = await Promise.all([
+      fetch(ordUrl).then(r=>r.json()),
+      fetch(payUrl).then(r=>r.json())
+    ]);
+
+    const totalPaid   = pays.reduce((s,p)=>s+parseFloat(p.AmountPaid||0),0);
+    const totalOwed   = ords.reduce((s,o)=>s+parseFloat(o.TotalAmount||0),0);
+    const pending     = ords.filter(o=>o.Status==='Pending');
+    const future      = ords.filter(o=> o.EventDate && new Date(o.EventDate) > new Date())
+                            .sort((a,b)=>new Date(a.EventDate)-new Date(b.EventDate));
+
+    document.getElementById('c-orders').textContent  = ords.length;
+    document.getElementById('c-pending').textContent = pending.length;
+    document.getElementById('c-paid').textContent    = formatPeso(totalPaid);
+    document.getElementById('c-next').textContent    = future.length ? formatDate(future[0].EventDate) : '—';
+
+    // Tracker
+    renderOrderTracker(ords.slice(-5).reverse());
+    // Dishes from my orders
+    await loadAndRenderDishes(ords);
+    // Recent orders table
+    renderRecentOrders(ords.slice().sort((a,b)=>b.OrderID-a.OrderID));
+    // Right panel: payment summary
+    renderCustomerPaySummary(totalPaid, totalOwed, ords.length, pays.length);
+    // Upcoming events
+    renderUpcomingEvents(future);
+    if (pending.length) document.getElementById('pending-tip').style.display = 'block';
+
+  } catch(e) {
+    showToast('Failed to load your data', 'error');
+    console.error(e);
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   HELPERS: RENDER COMPONENTS
+════════════════════════════════════════════════════════════════ */
+function renderStatsRow(cards) {
+  document.getElementById('stats-row').innerHTML = cards.map(c => `
+    <div class="stat-card">
+      <div class="stat-icon ${c.cls}">${icon(c.icon)}</div>
+      <div class="stat-info">
+        <h3 id="${c.id}">—</h3>
+        <p>${c.label}</p>
+      </div>
+    </div>`).join('');
+}
+
+function renderIncomeBar(collected, ordered, outstanding) {
+  const max = Math.max(collected, ordered, outstanding, 1);
+  document.getElementById('fill-collected').style.width    = (collected/max*100)+'%';
+  document.getElementById('fill-ordered').style.width      = (ordered/max*100)+'%';
+  document.getElementById('fill-outstanding').style.width  = (outstanding/max*100)+'%';
+  document.getElementById('amt-collected').textContent    = formatPeso(collected);
+  document.getElementById('amt-ordered').textContent      = formatPeso(ordered);
+  document.getElementById('amt-outstanding').textContent  = formatPeso(outstanding);
+}
+
+async function loadAndRenderDishes(orders) {
+  if (!menuItemsCache.length) {
+    try {
+      menuItemsCache = await fetch(`${API}/menu-items`).then(r => r.json());
+      menuItemLookup = new Map(
+        menuItemsCache.map(item => [String(item.ItemName || '').trim().toLowerCase(), item])
+      );
+    } catch (e) {
+      menuItemsCache = [];
+      menuItemLookup = new Map();
+    }
+  }
+
+  // Tally menu items across order items
+  const dishMap = {};
+  const fetches = orders.slice(0,30).map(o =>
+    fetch(`${API}/orders/${o.OrderID}/items`)
+      .then(r=>r.json())
+      .catch(()=>[])
+  );
+  const results = await Promise.allSettled(fetches);
+  results.forEach(r => {
+    if (r.status==='fulfilled' && Array.isArray(r.value)) {
+      r.value.forEach(item => {
+        const name = item.ItemName || item.item_name || item.MenuItemName || 'Unknown';
+        const menuMeta = findMenuMetaByName(name);
+        const cat  = item.Category || item.category || menuMeta?.Category || '';
+        if (!dishMap[name]) {
+          dishMap[name] = {
+            name,
+            category: cat,
+            count: 0,
+            imageUrl: menuMeta ? getMenuItemPhoto(menuMeta) : null
+          };
+        }
+        dishMap[name].count += parseInt(item.Quantity||1);
+      });
+    }
+  });
+  const sorted = Object.values(dishMap).sort((a,b)=>b.count-a.count);
+  renderDishesGrid(sorted);
+}
+
+function renderOrderTracker(orders) {
+  const steps = ['Pending','Quoted','Confirmed','Completed'];
+  const el    = document.getElementById('tracker-list');
+  if (!orders.length) {
+    el.innerHTML = `<p class="text-muted" style="font-size:13px;">No orders to track yet. <a href="menu.html" style="color:#e07b00;">Browse menu →</a></p>`;
+    return;
+  }
+  el.innerHTML = orders.map(o => {
+    const curr = steps.indexOf(o.Status);
+    const stepHTML = steps.map((s,i) => {
+      const done   = i < curr;
+      const active = i === curr;
+      const cls    = done ? 'done' : active ? 'active' : '';
+      return `
+        <div class="tracker-step">
+          <div class="step-dot ${cls}">${done ? '✓' : i+1}</div>
+          <div class="step-label ${cls}">${s}</div>
+        </div>
+        ${i<steps.length-1 ? `<div class="step-line ${done||active?'done':''}"></div>` : ''}`;
+    }).join('');
+    return `<div class="tracker-order">
+      <div class="tracker-label">Order #${o.OrderID} — ${formatDate(o.EventDate)} · ${o.Pax||'—'} pax</div>
+      <div class="tracker-steps">${stepHTML}</div>
+    </div>`;
+  }).join('');
+}
+
+// Most selling items — tab logic
+let _allOrders = [];
+let _orderItems = {};
+async function renderSellingItems(period, orders) {
+  if (orders) _allOrders = orders;
+  const now = new Date();
+  const cutoff = period === 'weekly'
+    ? new Date(now - 7*24*60*60*1000)
+    : new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const filtered = _allOrders.filter(o => {
+    const d = new Date(o.OrderDate || o.EventDate);
+    return !isNaN(d) && d >= cutoff;
+  });
+
+  // Aggregate from preloaded items if available, else count from orders
+  const dishMap = {};
+  // Try to use cached items (from loadAndRenderDishes is separate scope; simplest: recount from raw orders)
+  // Fall back to order count per status as proxy
+  filtered.forEach(o => {
+    const key = `Order #${o.OrderID}`;
+    // We count orders per "virtual dish" — ideally this uses order items
+    // Use a simpler approach: count by order (fallback when no items endpoint available easily here)
+  });
+
+  // Try fetching order items for selling list
+  const fetches = filtered.slice(0,20).map(o =>
+    fetch(`${API}/orders/${o.OrderID}/items`).then(r=>r.json()).catch(()=>[])
+  );
+  const results = await Promise.allSettled(fetches);
+  results.forEach(r => {
+    if (r.status==='fulfilled' && Array.isArray(r.value)) {
+      r.value.forEach(item => {
+        const name = item.ItemName || item.item_name || item.MenuItemName || 'Unknown';
+        const menuMeta = findMenuMetaByName(name);
+        if (!dishMap[name]) {
+          dishMap[name] = {
+            name,
+            count: 0,
+            imageUrl: menuMeta ? getMenuItemPhoto(menuMeta) : null
+          };
+        }
+        dishMap[name].count += parseInt(item.Quantity||1);
+      });
+    }
+  });
+  const sorted = Object.values(dishMap).sort((a,b)=>b.count-a.count).slice(0,5);
+  const el = document.getElementById('selling-list');
+  if (!sorted.length) {
+    el.innerHTML = `<p class="text-muted" style="font-size:12px;">No data for this period.</p>`;
+    return;
+  }
+  el.innerHTML = sorted.map((d,i) => `
+    <div class="selling-item">
+      <div class="selling-rank">${i+1}</div>
+      ${sellingThumbMarkup(d, d.name)}
+      <span class="selling-name">${escapeHtml(d.name)}</span>
+      <span class="selling-count">${d.count}x</span>
+    </div>`).join('');
+}
+
+function switchTab(btn, period) {
+  document.querySelectorAll('.rp-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('selling-list').innerHTML = `<p class="text-muted" style="font-size:12px;">Loading…</p>`;
+  renderSellingItems(period, null);
+}
+
+function renderCustomerPaySummary(paid, owed, ordersCount, paysCount) {
+  const balance = Math.max(0, owed - paid);
+  document.getElementById('pay-summary-list').innerHTML = `
+    <div class="pay-summary-item"><span class="psi-label">Total Orders</span><span class="psi-val">${ordersCount}</span></div>
+    <div class="pay-summary-item"><span class="psi-label">Total Order Value</span><span class="psi-val">${formatPeso(owed)}</span></div>
+    <div class="pay-summary-item"><span class="psi-label">Total Paid</span><span class="psi-val" style="color:#2e7d32;">${formatPeso(paid)}</span></div>
+    <div class="pay-summary-item"><span class="psi-label">Balance Remaining</span><span class="psi-val" style="color:${balance>0?'#c62828':'#2e7d32'};">${formatPeso(balance)}</span></div>
+    <div class="pay-summary-item"><span class="psi-label">Payments Made</span><span class="psi-val">${paysCount}</span></div>`;
+}
+
+function renderUpcomingEvents(events) {
+  const el = document.getElementById('upcoming-list');
+  if (!events.length) {
+    el.innerHTML = `<p class="text-muted" style="font-size:12px;">No upcoming events scheduled.</p>`;
+    return;
+  }
+  el.innerHTML = events.slice(0,4).map(o => `
+    <div class="event-item">
+      <div class="event-date">${formatDate(o.EventDate)}</div>
+      <div class="event-name">Order #${o.OrderID}</div>
+      <div class="event-pax">${o.Pax||'—'} pax · <span style="color:${statusStyle(o.Status).color};">${o.Status}</span></div>
+    </div>`).join('');
+}
+</script>
+<script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,1966 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Menu — Catering Billing System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    (function () {
+      const size = Number(localStorage.getItem('fontSize'));
+      const resolved = [13, 15, 17, 19].includes(size) ? size : 15;
+      document.documentElement.style.fontSize = '15px';
+      document.documentElement.style.zoom = String(resolved / 15);
+    })();
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      min-height: 100vh;
+    }
+    body.dark { background: #181a1b; color: #e8eaed; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 220px; background: #fff; border-right: 1px solid #eee;
+      display: flex; flex-direction: column; padding: 24px 0;
+      position: fixed; height: 100vh; z-index: 200; overflow-y: auto;
+    }
+    body.dark .sidebar { background: #202124; border-right-color: #303134; }
+    .sidebar-logo { text-align: center; padding: 0 20px 24px; border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+    body.dark .sidebar-logo { border-bottom-color: #303134; }
+    .sidebar-logo .logo-icon {
+      width: 48px; height: 48px; margin: 0 auto;
+      border-radius: 14px; background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+      display: flex; align-items: center; justify-content: center; color: #c96e00;
+    }
+    body.dark .sidebar-logo .logo-icon { background: #2b2d31; color: #f5c36a; }
+    .sidebar-logo h6 { font-size: 13px; font-weight: 700; color: #e07b00; margin-top: 6px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 24px;
+      cursor: pointer; color: #666; font-size: 14px; font-weight: 500;
+      text-decoration: none; transition: color 0.2s, background-color 0.2s, border-color 0.2s, transform 0.2s; border-left: 3px solid transparent;
+    }
+    .nav-item:hover, .nav-item.active { background: #fff5ea; color: #e07b00; border-left-color: #e07b00; }
+    body.dark .nav-item { color: #9aa0a6; }
+    body.dark .nav-item:hover, body.dark .nav-item.active { background: #2b2d31; color: #f0c040; border-left-color: #f0c040; }
+    .sidebar-footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid #f0f0f0; }
+    body.dark .sidebar-footer { border-top-color: #303134; }
+    .logout-btn { display: flex; align-items: center; gap: 10px; color: #e53935; font-size: 14px; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; }
+
+    /* ── MAIN ── */
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      background: #fff; padding: 14px 28px; display: flex;
+      align-items: center; justify-content: space-between;
+      border-bottom: 1px solid #eee; flex-shrink: 0; position: sticky; top: 0; z-index: 150;
+    }
+    body.dark .topbar { background: #202124; border-bottom-color: #303134; }
+    .topbar h5 { font-size: 17px; font-weight: 700; color: #2c2c2c; margin: 0; }
+    body.dark .topbar h5 { color: #e8eaed; }
+    .dark-toggle {
+      width: 40px; height: 40px; border-radius: 12px; border: 1px solid #eee;
+      background: #fff; color: #666; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    body.dark .dark-toggle { background: #2b2d31; border-color: #303134; color: #e8eaed; }
+    .nav-icon, .ui-icon, .logo-icon svg {
+      width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9;
+      stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+    }
+    .nav-icon-slot {
+      width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-icon svg { width: 24px; height: 24px; }
+
+    /* ── POS LAYOUT ── */
+    .pos-layout { display: flex; flex: 1; min-height: 0; }
+
+    /* ── CENTER ── */
+    .item-browser { flex: 1; display: flex; flex-direction: column; min-width: 0; overflow: hidden; padding: 28px 28px 40px; }
+
+    .search-wrap { position: relative; margin-bottom: 14px; }
+    .search-wrap input {
+      width: 100%; padding: 10px 16px 10px 40px;
+      border: 1.5px solid #eee; border-radius: 10px;
+      font-size: 14px; background: #fff; color: #2c2c2c;
+      outline: none; transition: border-color 0.2s;
+    }
+    .search-wrap input:focus { border-color: #e07b00; }
+    body.dark .search-wrap input { background: #202124; border-color: #303134; color: #e8eaed; }
+    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); font-size: 15px; color: #aaa; }
+
+    .filter-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filter-btn {
+      padding: 5px 14px; border-radius: 20px; border: 1.5px solid #eee;
+      background: #fff; font-size: 12px; font-weight: 600; color: #666;
+      cursor: pointer; transition: color 0.2s, background-color 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s; white-space: nowrap;
+    }
+    .filter-btn:hover { border-color: #e07b00; color: #e07b00; }
+    .filter-btn.active { background: #e07b00; color: #fff; border-color: #e07b00; }
+    body.dark .filter-btn { background: #202124; border-color: #303134; color: #9aa0a6; }
+    body.dark .filter-btn.active { background: #e07b00; color: #fff; }
+
+    /* ── ITEM GRID ── */
+    .item-grid {
+      flex: 1;
+      overflow-y: auto;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      padding: 4px 4px 16px 4px;
+      align-content: start;
+    }
+    .item-grid::-webkit-scrollbar { width: 5px; }
+    .item-grid::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+    /* ── ITEM CARD ── */
+    .item-card {
+      background: #fff;
+      border-radius: 16px;
+      border: 1.5px solid #eee;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s, background-color 0.2s, opacity 0.2s;
+      cursor: pointer;
+      position: relative;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      /* NO overflow:hidden — was clipping the footer */
+    }
+    .item-card:hover {
+      border-color: #e07b00;
+      box-shadow: 0 6px 20px rgba(224,123,0,0.15);
+      transform: translateY(-3px);
+    }
+    body.dark .item-card { background: #202124; border-color: #303134; }
+    body.dark .item-card:hover { border-color: #f0c040; }
+    .item-card.unavailable { opacity: 0.45; pointer-events: none; }
+
+    /* card image — clip only the image, not the whole card */
+    .item-img-wrap {
+      width: 100%;
+      height: 140px;
+      overflow: hidden;
+      position: relative;
+      background: #f0f0f0;
+      flex-shrink: 0;
+      border-radius: 14px 14px 0 0;
+    }
+    body.dark .item-img-wrap { background: #2b2d31; }
+    .item-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+      display: block;
+    }
+    .item-card:hover .item-img { transform: scale(1.05); }
+    .item-img-fallback {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 52px;
+    }
+
+    /* card body — fixed structure, nothing truncated */
+    .item-body {
+      padding: 12px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+
+    .item-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: #2c2c2c;
+      line-height: 1.3;
+    }
+    body.dark .item-name { color: #e8eaed; }
+
+    /* description — 2 lines, fixed height so all cards align */
+    .item-desc {
+      font-size: 11px;
+      color: #888;
+      line-height: 1.5;
+      height: 33px;          /* exactly 2 lines × 1.5 line-height × 11px */
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .item-badges {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      min-height: 20px;
+    }
+    .badge-cat {
+      font-size: 9px; font-weight: 700;
+      padding: 2px 8px; border-radius: 20px;
+      background: #fff3e0; color: #e07b00;
+    }
+
+    /* footer — always at the bottom, never clipped */
+    .item-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding-top: 10px;
+      border-top: 1px solid #f0f0f0;
+      flex-shrink: 0;
+    }
+    body.dark .item-footer { border-top-color: #303134; }
+
+    .item-price { font-size: 15px; font-weight: 700; color: #e07b00; }
+    .item-price span { font-size: 10px; color: #bbb; font-weight: 400; margin-left: 1px; }
+
+    .add-btn {
+      width: 34px; height: 34px;
+      border-radius: 9px;
+      background: #e07b00; color: #fff;
+      border: none;
+      font-size: 24px; font-weight: 400;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .add-btn:hover { background: #c96e00; }
+
+    /* availability toggle — sits inside the image wrap */
+    .avail-toggle {
+      position: absolute; top: 8px; right: 8px; z-index: 2;
+      display: flex; align-items: center; gap: 4px;
+      background: rgba(0,0,0,0.55); border-radius: 20px;
+      padding: 3px 8px; font-size: 10px; color: #fff;
+      pointer-events: all;
+    }
+    .avail-toggle input { cursor: pointer; accent-color: #e07b00; }
+
+    /* ── BILLS PANEL ── */
+    .bills-panel {
+      width: 300px; min-width: 300px; background: #fff; border-left: 1px solid #eee;
+      display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden;
+    }
+    body.dark .bills-panel { background: #202124; border-left-color: #303134; }
+
+    .bills-header {
+      padding: 16px 20px; border-bottom: 1px solid #eee;
+      font-size: 16px; font-weight: 700; color: #2c2c2c; flex-shrink: 0;
+    }
+    body.dark .bills-header { border-bottom-color: #303134; color: #e8eaed; }
+
+    .bills-form { padding: 14px 20px; border-bottom: 1px solid #eee; flex-shrink: 0; }
+    body.dark .bills-form { border-bottom-color: #303134; }
+    .bills-label { font-size: 10px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block; }
+    .bills-input {
+      width: 100%; border: 1.5px solid #eee; border-radius: 8px;
+      padding: 7px 10px; font-size: 13px; color: #2c2c2c;
+      margin-bottom: 10px; outline: none; background: #fff;
+    }
+    .bills-input:focus { border-color: #e07b00; }
+    body.dark .bills-input { background: #2b2d31; border-color: #303134; color: #e8eaed; }
+
+    /* bill items */
+    .bill-items { flex: 1; overflow-y: auto; padding: 10px 20px; }
+    .bill-items::-webkit-scrollbar { width: 4px; }
+    .bill-items::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+    .bill-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 0; border-bottom: 1px solid #f5f5f5;
+    }
+    body.dark .bill-item { border-bottom-color: #303134; }
+
+    .bill-item-thumb {
+      width: 42px; height: 42px; border-radius: 8px;
+      overflow: hidden; flex-shrink: 0; background: #f5f5f5;
+    }
+    body.dark .bill-item-thumb { background: #2b2d31; }
+    .bill-item-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .bill-item-thumb-fallback { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+
+    .bill-item-info { flex: 1; min-width: 0; }
+    .bill-item-name { font-size: 12px; font-weight: 600; color: #2c2c2c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    body.dark .bill-item-name { color: #e8eaed; }
+    .bill-item-price { font-size: 11px; color: #e07b00; font-weight: 700; }
+    .bill-item-line { font-size: 10px; color: #aaa; }
+    .remove-btn { font-size: 10px; color: #e53935; background: none; border: none; cursor: pointer; font-weight: 600; padding: 0; margin-top: 2px; }
+
+    .bill-qty { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .qty-btn {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 1.5px solid #eee; background: #fff;
+      font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      color: #666; line-height: 1; transition: color 0.15s, background-color 0.15s, border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+    }
+    .qty-btn:hover { background: #e07b00; color: #fff; border-color: #e07b00; }
+    body.dark .qty-btn { background: #2b2d31; border-color: #303134; color: #9aa0a6; }
+    .qty-val { font-size: 13px; font-weight: 700; color: #2c2c2c; min-width: 20px; text-align: center; }
+    body.dark .qty-val { color: #e8eaed; }
+
+    .bill-empty { text-align: center; padding: 32px 0; color: #ccc; font-size: 13px; }
+    .bill-empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+    /* totals */
+    .bills-totals { padding: 14px 20px; border-top: 1px solid #eee; flex-shrink: 0; }
+    body.dark .bills-totals { border-top-color: #303134; }
+    .total-row { display: flex; justify-content: space-between; font-size: 13px; color: #666; margin-bottom: 6px; }
+    body.dark .total-row { color: #9aa0a6; }
+    .total-row.grand { font-size: 16px; font-weight: 700; color: #2c2c2c; border-top: 1.5px dashed #eee; padding-top: 10px; margin-top: 4px; }
+    body.dark .total-row.grand { color: #e8eaed; border-top-color: #303134; }
+    .total-row.grand .total-amt { color: #e07b00; }
+    .place-order-btn {
+      width: 100%; padding: 13px; background: #e07b00; color: #fff;
+      border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
+      cursor: pointer; margin-top: 12px; transition: background 0.2s; letter-spacing: 0.5px;
+    }
+    .place-order-btn:hover { background: #c96e00; }
+    .place-order-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    /* toast */
+    .toast-msg {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      background: #2c2c2c; color: #fff; padding: 10px 22px;
+      border-radius: 30px; font-size: 13px; font-weight: 500;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 9999;
+    }
+    .toast-msg.show { opacity: 1; }
+    .toast-msg.success { background: #2e7d32; }
+    .toast-msg.error   { background: #c62828; }
+
+    .no-items { text-align: center; color: #ccc; padding: 40px 0; font-size: 14px; grid-column: 1/-1; }
+
+    .badge-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .badge-halal { background: #e8f5e9; color: #2e7d32; }
+    .badge-status-on { background: #e8f5e9; color: #2e7d32; }
+    .badge-status-off { background: #fce4ec; color: #c62828; }
+    .badge-muted { background: #f5f5f5; color: #666; }
+    body.dark .badge-muted { background: #2f3438; color: #d0d4d9; }
+
+    .item-carousel-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.58);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 3;
+    }
+    .item-carousel-arrow.left { left: 8px; }
+    .item-carousel-arrow.right { right: 8px; }
+    .item-card:hover .item-carousel-arrow { opacity: 1; }
+    .item-carousel-dots {
+      position: absolute;
+      left: 50%;
+      bottom: 9px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 5px;
+      z-index: 3;
+    }
+    .item-carousel-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.55);
+      cursor: pointer;
+    }
+    .item-carousel-dot.active { background: #fff; }
+
+    .dish-modal-card {
+      background: #fff;
+      border-radius: 22px;
+      width: min(760px, 96vw);
+      max-height: 92vh;
+      overflow: hidden;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.28);
+      display: flex;
+      flex-direction: column;
+    }
+    body.dark .dish-modal-card { background: #202124; color: #e8eaed; }
+    .dish-modal-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+    body.dark .dish-modal-header { border-bottom-color: #303134; }
+    .dish-modal-body { overflow-y: auto; padding: 22px; }
+    .dish-modal-close {
+      border: none;
+      background: none;
+      color: #999;
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .detail-hero {
+      position: relative;
+      height: 290px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #f0f0f0;
+      margin-bottom: 18px;
+    }
+    body.dark .detail-hero { background: #2b2d31; }
+    .detail-hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .detail-hero-fallback {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #bbb;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .detail-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0,0,0,0.55);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .detail-arrow.left { left: 14px; }
+    .detail-arrow.right { right: 14px; }
+    .detail-dots {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+      z-index: 2;
+    }
+    .detail-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.55);
+      cursor: pointer;
+    }
+    .detail-dot.active { background: #fff; }
+    .detail-title { font-size: 24px; font-weight: 800; margin: 0 0 10px; color: #2c2c2c; }
+    body.dark .detail-title { color: #e8eaed; }
+    .detail-meta { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .detail-description { font-size: 14px; line-height: 1.7; color: #666; margin-bottom: 18px; }
+    body.dark .detail-description { color: #bdc1c6; }
+    .detail-panels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .detail-panel {
+      border: 1px solid #eee;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fafafa;
+    }
+    body.dark .detail-panel { border-color: #303134; background: #2b2d31; }
+    .detail-panel-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #999;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+    .detail-panel-value { font-size: 16px; font-weight: 800; color: #2c2c2c; }
+    body.dark .detail-panel-value { color: #e8eaed; }
+    .detail-panel-note { font-size: 12px; color: #888; margin-top: 5px; }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 8px;
+    }
+    .modal-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .modal-btn.secondary { background: #f5f5f5; color: #666; }
+    .modal-btn.primary { background: #e07b00; color: #fff; }
+    .modal-btn.danger { background: #fce4ec; color: #c62828; }
+
+    .dish-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .dish-field { margin-bottom: 14px; }
+    .dish-field.full { grid-column: 1 / -1; }
+    .dish-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: block;
+      margin-bottom: 5px;
+    }
+    .dish-input, .dish-textarea, .dish-select {
+      width: 100%;
+      border: 1.5px solid #eee;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      background: #fff;
+      color: #2c2c2c;
+      outline: none;
+    }
+    body.dark .dish-input, body.dark .dish-textarea, body.dark .dish-select {
+      background: #2b2d31;
+      border-color: #303134;
+      color: #e8eaed;
+    }
+    .dish-check-row {
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .dish-check {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+    }
+    body.dark .dish-check { color: #d0d4d9; }
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 12px;
+    }
+    .photo-slot {
+      border: 1.5px dashed #ddd;
+      border-radius: 14px;
+      background: #fafafa;
+      min-height: 140px;
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    body.dark .photo-slot { background: #2b2d31; border-color: #303134; }
+    .photo-slot img {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display: block;
+    }
+    .photo-slot-empty {
+      text-align: center;
+      color: #bbb;
+      padding: 14px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .photo-slot-meta {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      background: rgba(0,0,0,0.58);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    .photo-remove {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(198,40,40,0.92);
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (max-width: 1100px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid #eee;
+      }
+      .main { margin-left: 0; }
+      .pos-layout { flex-wrap: wrap; }
+      .item-browser { min-width: 0; padding: 20px 18px 30px; }
+      .bills-panel { width: 100%; min-width: auto; border-left: none; border-top: 1px solid #eee; }
+      .topbar { flex-wrap: wrap; gap: 12px; }
+      .topbar h5 { flex: 1 1 100%; }
+      .item-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+      .bills-header, .bills-form, .bills-totals { padding-left: 16px; padding-right: 16px; }
+    }
+
+    @media (max-width: 720px) {
+      .dish-form-grid { grid-template-columns: 1fr; }
+      .detail-hero { height: 220px; }
+      .dish-modal-card { width: 96vw; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><span id="logo-icon-slot"></span></div>
+    <h6>CATERING BILLING</h6>
+  </div>
+  <a href="dashboard.html" class="nav-item"><span class="nav-icon-slot" data-icon="home"></span><span>Dashboard</span></a>
+  <a href="customers.html" class="nav-item" id="nav-customers"><span class="nav-icon-slot" data-icon="user"></span><span>Customers</span></a>
+  <a href="menu.html"      class="nav-item active"><span class="nav-icon-slot" data-icon="menu"></span><span>Menu Items</span></a>
+  <a href="orders.html"    class="nav-item"><span class="nav-icon-slot" data-icon="clipboard"></span><span>Orders</span></a>
+  <a href="payments.html"  class="nav-item"><span class="nav-icon-slot" data-icon="card"></span><span>Payments</span></a>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logout()"><span class="nav-icon-slot" data-icon="logout"></span><span>Logout</span></button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <h5><span style="display:inline-flex;align-items:center;gap:10px;"><span class="nav-icon-slot" data-icon="menu"></span><span>Menu Management</span></span></h5>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button id="add-dish-btn" onclick="openAddModal()"
+        style="display:none;padding:8px 18px;background:#e07b00;color:#fff;
+               border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">
+        ＋ Add Dish
+      </button>
+      <button class="dark-toggle" onclick="toggleDark()">
+        <span id="dark-icon"></span>
+      </button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="topbar-avatar" style="
+          width:34px;height:34px;border-radius:50%;
+          background:#e07b00;color:#fff;
+          display:flex;align-items:center;justify-content:center;
+          font-size:15px;font-weight:700;">A
+        </div>
+        <div>
+          <div id="topbar-user" style="font-size:14px;font-weight:600;line-height:1.2"></div>
+          <span id="topbar-role" style="font-size:10px;font-weight:700;
+                 padding:2px 8px;border-radius:20px;
+                 text-transform:uppercase;letter-spacing:0.5px;"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POS LAYOUT -->
+  <div class="pos-layout">
+
+    <!-- CENTER — item browser -->
+    <div class="item-browser">
+
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input"
+               placeholder="Search menu items..."
+               oninput="debouncedFilter()">
+      </div>
+
+      <div class="filter-row" id="cat-tabs">
+        <button class="filter-btn active" onclick="setCategory('Main Course',this)">🍖 Main Course</button>
+        <button class="filter-btn" onclick="setCategory('Rice & Pasta',this)">🍚 Rice & Pasta</button>
+        <button class="filter-btn" onclick="setCategory('Appetizer',this)">🥗 Appetizer</button>
+        <button class="filter-btn" onclick="setCategory('Side Dish',this)">🥘 Side Dish</button>
+        <button class="filter-btn" onclick="setCategory('Dessert',this)">🍮 Dessert</button>
+        <button class="filter-btn" onclick="setCategory('Beverage',this)">🥤 Beverage</button>
+        <button class="filter-btn" onclick="setCategory('Package',this)">📦 Package</button>
+      </div>
+
+      <div class="item-grid" id="item-grid">
+        <div class="no-items">Loading menu items...</div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT panel: Popular Dishes (admin/staff) OR Bills (customer) -->
+    <!-- POPULAR DISHES — admin & staff -->
+    <div class="bills-panel" id="panel-popular">
+      <div class="bills-header">🔥 Popular Dishes</div>
+      <div style="padding:10px 20px 6px;flex-shrink:0;">
+        <span style="font-size:11px;color:#aaa;font-weight:600;">Top ordered items across all events</span>
+      </div>
+      <div class="bill-items" id="popular-list">
+        <div class="bill-empty">
+          <div class="bill-empty-icon">📊</div>
+          Loading popular dishes...
+        </div>
+      </div>
+    </div>
+
+    <!-- BILLS — customer only -->
+    <div class="bills-panel" id="panel-bills" style="display:none;">
+      <div class="bills-header">🧾 Bills</div>
+      <div class="bills-form">
+        <label class="bills-label">Customer</label>
+        <select id="bill-customer" class="bills-input">
+          <option value="">Select Customer</option>
+        </select>
+        <label class="bills-label">Event Date</label>
+        <input type="date" id="bill-eventdate" class="bills-input">
+        <label class="bills-label">Event Address</label>
+        <input type="text" id="bill-eventaddress" class="bills-input" placeholder="Event location">
+        <label class="bills-label">No. of Pax</label>
+        <input type="number" id="bill-pax" class="bills-input" placeholder="e.g. 50" min="1" oninput="recalcAll()">
+      </div>
+      <div class="bill-items" id="bill-items">
+        <div class="bill-empty">
+          <div class="bill-empty-icon">🛒</div>
+          No items added yet.<br>Click + to add items.
+        </div>
+      </div>
+      <div class="bills-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span id="subtotal">₱0.00</span>
+        </div>
+        <div class="total-row">
+          <span style="font-size:11px;color:#aaa">Based on <strong id="pax-display">0</strong> pax</span>
+          <span id="item-count" style="font-size:11px;color:#aaa">0 items</span>
+        </div>
+        <div class="total-row grand">
+          <span>Total Amount</span>
+          <span class="total-amt" id="grand-total">₱0.00</span>
+        </div>
+        <button class="place-order-btn" onclick="placeOrder()">🛒 Place Order</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast-msg" id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:5000';
+const role = localStorage.getItem('role');
+const username = localStorage.getItem('username') || '';
+const customerId = localStorage.getItem('customer_id');
+const menuParams = new URLSearchParams(window.location.search);
+const selectedCustomerId = menuParams.get('customer_id');
+const selectedCustomerName = menuParams.get('customer_name') || '';
+const MIN_ORDER_LEAD_DAYS = 3;
+const emojiMap = {
+  'Main Course': '🍖',
+  'Rice & Pasta': '🍚',
+  'Appetizer': '🥗',
+  'Side Dish': '🥘',
+  'Dessert': '🍮',
+  'Beverage': '🥤',
+  'Package': '📦'
+};
+
+const ICONS = {
+  sun: '<svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"></path></svg>',
+  moon: '<svg class="ui-icon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg>',
+  tray: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 15h18"></path><path d="M5 15a7 7 0 0 1 14 0"></path><path d="M8 10V8a4 4 0 0 1 8 0v2"></path></svg>',
+  home: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>',
+  user: '<svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>',
+  menu: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M4.5 7.5h15"></path><path d="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5Z"></path><path d="M7.5 12h9"></path><path d="M7.5 16.5h6"></path></svg>',
+  clipboard: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="4" rx="1.5"></rect><path d="M8 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"></path></svg>',
+  card: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"></rect><path d="M2.5 10h19"></path><path d="M6.5 15h4"></path><path d="M17 15h.01"></path></svg>',
+  logout: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>'
+};
+function icon(name) { return ICONS[name] || ''; }
+function applyStaticIcons() {
+  document.getElementById('logo-icon-slot').innerHTML = icon('tray');
+  document.querySelectorAll('.nav-icon-slot').forEach(node => {
+    node.innerHTML = icon(node.dataset.icon);
+  });
+}
+
+if (!role || !username) window.location.href = 'login.html';
+applyStaticIcons();
+
+document.getElementById('topbar-user').textContent = username;
+document.getElementById('topbar-avatar').textContent = username.charAt(0).toUpperCase();
+const roleEl = document.getElementById('topbar-role');
+roleEl.textContent = role;
+roleEl.style.cssText += ({
+  admin: 'background:#fff3e0;color:#e07b00;',
+  staff: 'background:#e3f2fd;color:#1565c0;',
+  customer: 'background:#e8f5e9;color:#2e7d32;'
+}[role] || 'background:#f5f5f5;color:#666;');
+
+if (role === 'customer') {
+  const nc = document.getElementById('nav-customers');
+  if (nc) {
+    nc.innerHTML = `<span class="nav-icon-slot" data-icon="user">${icon('user')}</span><span>My Profile</span>`;
+    nc.href = 'customers.html';
+  }
+}
+
+let allItems = [];
+let billItems = [];
+let allCustomers = [];
+let activeCategory = 'Main Course';
+let cardCarouselState = {};
+let detailModalState = { open: false, loading: false, mode: 'view', item: null, carouselIndex: 0 };
+let formState = null;
+let deletingMenuIds = new Set();
+let gridRenderToken = 0;
+const DISH_DRAFT_KEY_PREFIX = 'menuDishDraftV1:';
+
+function getDishDraftKey(itemId) {
+  return `${DISH_DRAFT_KEY_PREFIX}${itemId || 'new'}`;
+}
+
+function loadDishDraft(itemId) {
+  try {
+    const raw = localStorage.getItem(getDishDraftKey(itemId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function clearDishDraft(itemId) {
+  localStorage.removeItem(getDishDraftKey(itemId));
+}
+
+function saveDishDraft() {
+  if (!formState) return;
+  const draft = {
+    ItemName: formState.ItemName || '',
+    Description: formState.Description || '',
+    Category: formState.Category || 'Main Course',
+    pricing_type: formState.pricing_type || 'per_pax',
+    PricePerPax: formState.PricePerPax ?? '',
+    serves_up_to: formState.serves_up_to ?? '',
+    IsHalal: !!formState.IsHalal,
+    Available: !!formState.Available,
+    slotRemoved: formState.slots.map(slot => !!slot.removed),
+    savedAt: Date.now()
+  };
+  localStorage.setItem(getDishDraftKey(formState.itemId), JSON.stringify(draft));
+}
+
+function applyDishDraft(baseState, itemId) {
+  const draft = loadDishDraft(itemId);
+  if (!draft) return baseState;
+  baseState.ItemName = draft.ItemName ?? baseState.ItemName;
+  baseState.Description = draft.Description ?? baseState.Description;
+  baseState.Category = draft.Category ?? baseState.Category;
+  baseState.pricing_type = draft.pricing_type ?? baseState.pricing_type;
+  baseState.PricePerPax = draft.PricePerPax ?? baseState.PricePerPax;
+  baseState.serves_up_to = draft.serves_up_to ?? baseState.serves_up_to;
+  baseState.IsHalal = typeof draft.IsHalal === 'boolean' ? draft.IsHalal : baseState.IsHalal;
+  baseState.Available = typeof draft.Available === 'boolean' ? draft.Available : baseState.Available;
+  if (Array.isArray(draft.slotRemoved)) {
+    baseState.slots.forEach((slot, index) => {
+      if (draft.slotRemoved[index] && slot.existingPath && !slot.file) {
+        slot.removed = true;
+        slot.preview = null;
+      }
+    });
+  }
+  return baseState;
+}
+
+function minEventDate() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() + MIN_ORDER_LEAD_DAYS);
+  return d.toISOString().split('T')[0];
+}
+
+function syncEventDateMinimum() {
+  const eventDateInput = document.getElementById('bill-eventdate');
+  if (eventDateInput) eventDateInput.min = minEventDate();
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function escapeAttr(value) {
+  return escapeHtml(value);
+}
+
+async function requestWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function formatMoney(value) {
+  return `₱${Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function normalizeImagePath(path) {
+  if (!path) return null;
+  const raw = String(path).replace(/\\/g, '/').replace(/^\/+/, '');
+  return raw.startsWith('static/uploads/dishes/') ? raw : `static/uploads/dishes/${raw.split('/').pop()}`;
+}
+
+function getItemImage(item) {
+  const path = normalizeImagePath(item?.image_path);
+  return path ? `${API}/${path}` : null;
+}
+
+function getItemPhotoUrls(item) {
+  const paths = item?.all_photos?.length
+    ? item.all_photos
+    : [item?.image_path, ...(item?.photos || []).map(photo => photo.image_path)].filter(Boolean);
+  return [...new Set(paths.map(normalizeImagePath).filter(Boolean))].map(path => `${API}/${path}`);
+}
+
+function getCardPhotoUrls(item) {
+  const photos = getItemPhotoUrls(item);
+  return item?.Category === 'Package' ? photos : photos.slice(0, 1);
+}
+
+function isAvailable(item) {
+  return item?.Available !== 0;
+}
+
+function canManageMenu() {
+  return role === 'admin' || role === 'staff';
+}
+
+function pricingLabel(item) {
+  if ((item?.pricing_type || 'per_pax') === 'flat_rate') return `${formatMoney(item.PricePerPax)} flat`;
+  return `${formatMoney(item.PricePerPax)}/pax`;
+}
+
+function pricingDetailLabel(item) {
+  if ((item?.pricing_type || 'per_pax') === 'flat_rate') return `${formatMoney(item.PricePerPax)} flat rate`;
+  return `${formatMoney(item.PricePerPax)} / pax`;
+}
+
+function getLineTotal(item, pax, qty) {
+  const price = Number(item?.PricePerPax || 0);
+  if ((item?.pricing_type || 'per_pax') === 'flat_rate') return price * qty;
+  return price * pax * qty;
+}
+
+function getBreakdownLabel(item, pax, qty) {
+  const total = getLineTotal(item, pax, qty);
+  if ((item?.pricing_type || 'per_pax') === 'flat_rate') {
+    return `${formatMoney(item.PricePerPax)} × qty ${qty} = ${formatMoney(total)} (flat rate)`;
+  }
+  return `${formatMoney(item.PricePerPax)} × ${pax} pax × qty ${qty} = ${formatMoney(total)}`;
+}
+
+async function loadMenu() {
+  try {
+    const res = await fetch(`${API}/menu-items`);
+    allItems = await res.json();
+    renderGrid();
+  } catch (e) {
+    document.getElementById('item-grid').innerHTML = '<div class="no-items">⚠️ Could not load menu. Make sure Flask is running.</div>';
+  }
+}
+
+function setCategory(cat, btn) {
+  activeCategory = cat;
+  document.querySelectorAll('#cat-tabs .filter-btn').forEach(node => node.classList.remove('active'));
+  btn.classList.add('active');
+  renderGrid();
+}
+
+function filterItems() {
+  renderGrid();
+}
+
+const debouncedFilter = (() => {
+  let timer;
+  return () => { clearTimeout(timer); timer = setTimeout(filterItems, 200); };
+})();
+
+function renderCardCarousel(item) {
+  const photos = getCardPhotoUrls(item);
+  const fallback = `
+    <div class="item-img-fallback" style="display:flex">
+      <div style="text-align:center;color:#ccc">
+        <div style="font-size:32px">📷</div>
+        <div style="font-size:10px;margin-top:4px;font-weight:600;letter-spacing:.3px">No Photo</div>
+      </div>
+    </div>`;
+  if (!photos.length) return fallback;
+
+  const isPackageCarousel = item.Category === 'Package' && photos.length > 1;
+  const activeIndex = Math.min(cardCarouselState[item.ItemID] || 0, photos.length - 1);
+  const dots = photos.map((_, index) =>
+    `<span class="item-carousel-dot ${index === activeIndex ? 'active' : ''}" onclick="setCardCarouselIndex(${item.ItemID}, ${index}, event)"></span>`
+  ).join('');
+  return `
+    <img class="item-img" src="${photos[activeIndex]}" alt="${escapeHtml(item.ItemName)}"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <div class="item-img-fallback" style="display:none">
+      <div style="text-align:center;color:#ccc">
+        <div style="font-size:32px">📷</div>
+        <div style="font-size:10px;margin-top:4px;font-weight:600;letter-spacing:.3px">No Photo</div>
+      </div>
+    </div>
+    ${isPackageCarousel ? `<button class="item-carousel-arrow left" onclick="advanceCardCarousel(${item.ItemID}, -1, event)">‹</button>
+    <button class="item-carousel-arrow right" onclick="advanceCardCarousel(${item.ItemID}, 1, event)">›</button>
+    <div class="item-carousel-dots">${dots}</div>` : ''}`;
+}
+
+function renderItemCardHtml(item) {
+  return `
+    <div class="item-card" id="card-${item.ItemID}" onclick="openDetailModal(${item.ItemID})">
+      <div class="item-img-wrap">
+        ${canManageMenu() ? `
+          <div class="avail-toggle" onclick="event.stopPropagation()">
+            <input type="checkbox" ${isAvailable(item) ? 'checked' : ''} onchange="toggleAvail(${item.ItemID}, this.checked)">
+            <span>${isAvailable(item) ? 'Available' : 'Hidden'}</span>
+          </div>` : ''}
+        ${renderCardCarousel(item)}
+      </div>
+      <div class="item-body">
+        <div class="item-name">${escapeHtml(item.ItemName)}</div>
+        <div class="item-desc">${escapeHtml(item.Description || 'Delicious catering menu item')}</div>
+        <div class="item-badges">
+          <span class="badge-cat">${escapeHtml(item.Category)}</span>
+          ${item.IsHalal ? '<span class="badge-pill badge-halal">Halal</span>' : ''}
+          ${!isAvailable(item) ? '<span class="badge-pill badge-status-off">Unavailable</span>' : ''}
+        </div>
+        <div class="item-footer">
+          <div class="item-price">${formatMoney(item.PricePerPax)}<span>${(item.pricing_type || 'per_pax') === 'flat_rate' ? 'flat' : '/pax'}</span></div>
+          <div style="display:flex;gap:6px;align-items:center">
+            ${canManageMenu() ? `<button onclick="openEditModal(${item.ItemID}, event)" title="Edit dish" style="width:34px;height:34px;border-radius:9px;background:#f5f5f5;color:#666;border:1.5px solid #eee;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✏️</button>` : ''}
+            ${role === 'admin' ? `<button onclick='event.stopPropagation();deleteMenu(${item.ItemID}, ${JSON.stringify(item.ItemName)}, this)' title="Delete dish" ${deletingMenuIds.has(item.ItemID) ? 'disabled' : ''} style="width:34px;height:34px;border-radius:9px;background:#fce4ec;color:#c62828;border:1.5px solid #f8bbd0;font-size:15px;cursor:${deletingMenuIds.has(item.ItemID) ? 'wait' : 'pointer'};display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:${deletingMenuIds.has(item.ItemID) ? '0.7' : '1'}">🗑️</button>` : ''}
+            ${role === 'customer' ? `<button class="add-btn" onclick="addToBill(${item.ItemID}, event)" title="Add to bill">+</button>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function getCurrentSearchTerm() {
+  return (document.getElementById('search-input')?.value || '').toLowerCase();
+}
+
+function itemMatchesFilters(item, search = getCurrentSearchTerm()) {
+  const matchesCategory = activeCategory === 'All' || item.Category === activeCategory;
+  const matchesSearch = (item.ItemName || '').toLowerCase().includes(search) || (item.Description || '').toLowerCase().includes(search);
+  const matchesAvailability = role !== 'customer' || isAvailable(item);
+  return matchesCategory && matchesSearch && matchesAvailability;
+}
+
+function ensureGridEmptyState(grid = document.getElementById('item-grid')) {
+  if (!grid) return;
+  const hasCards = !!grid.querySelector('.item-card');
+  if (!hasCards) grid.innerHTML = '<div class="no-items">No items found.</div>';
+}
+
+function updateGridCard(item, options = {}) {
+  const grid = document.getElementById('item-grid');
+  if (!grid) return;
+  const preferTop = !!options.preferTop;
+  const existing = document.getElementById(`card-${item.ItemID}`);
+  const matches = itemMatchesFilters(item);
+
+  // Cancel any in-flight batched render so incremental updates are not overwritten.
+  gridRenderToken += 1;
+
+  if (!matches) {
+    if (existing) {
+      existing.remove();
+      ensureGridEmptyState(grid);
+    }
+    return;
+  }
+
+  const cardHtml = renderItemCardHtml(item).trim();
+  if (existing) {
+    existing.outerHTML = cardHtml;
+    return;
+  }
+
+  grid.querySelector('.no-items')?.remove();
+  grid.insertAdjacentHTML(preferTop ? 'afterbegin' : 'beforeend', cardHtml);
+}
+
+function removeGridCard(itemId) {
+  const grid = document.getElementById('item-grid');
+  if (!grid) return;
+  gridRenderToken += 1;
+  const card = document.getElementById(`card-${itemId}`);
+  if (card) card.remove();
+  ensureGridEmptyState(grid);
+}
+
+function renderGrid() {
+  const search = getCurrentSearchTerm();
+  const grid = document.getElementById('item-grid');
+  const filtered = allItems.filter(item => itemMatchesFilters(item, search));
+
+  const renderToken = ++gridRenderToken;
+  if (!filtered.length) {
+    grid.innerHTML = '<div class="no-items">No items found.</div>';
+    return;
+  }
+
+  grid.innerHTML = '';
+  const batchSize = 20;
+  let index = 0;
+
+  const appendBatch = () => {
+    if (renderToken !== gridRenderToken) return;
+    const batch = filtered.slice(index, index + batchSize);
+    if (batch.length) {
+      grid.insertAdjacentHTML('beforeend', batch.map(renderItemCardHtml).join(''));
+      index += batchSize;
+    }
+    if (index < filtered.length) {
+      requestAnimationFrame(appendBatch);
+    }
+  };
+  requestAnimationFrame(appendBatch);
+}
+
+function setCardCarouselIndex(itemId, index, event) {
+  event.stopPropagation();
+  cardCarouselState[itemId] = index;
+  updateCardCarouselDOM(itemId);
+}
+
+function advanceCardCarousel(itemId, delta, event) {
+  event.stopPropagation();
+  const item = allItems.find(entry => entry.ItemID === itemId);
+  const photos = getCardPhotoUrls(item);
+  if (photos.length < 2) return;
+  const next = ((cardCarouselState[itemId] || 0) + delta + photos.length) % photos.length;
+  cardCarouselState[itemId] = next;
+  updateCardCarouselDOM(itemId);
+}
+
+function updateCardCarouselDOM(itemId) {
+  const card = document.getElementById(`card-${itemId}`);
+  if (!card) return;
+  const wrap = card.querySelector('.item-img-wrap');
+  if (!wrap) return;
+  const item = allItems.find(entry => entry.ItemID === itemId);
+  if (!item) return;
+  const toggle = wrap.querySelector('.avail-toggle');
+  wrap.innerHTML = (toggle ? toggle.outerHTML : '') + renderCardCarousel(item);
+}
+
+function addToBill(itemId, event) {
+  if (event) event.stopPropagation();
+  const item = allItems.find(entry => entry.ItemID === itemId);
+  if (!item) return;
+  const existing = billItems.find(entry => entry.item.ItemID === itemId);
+  if (existing) existing.qty += 1;
+  else billItems.push({ item, qty: 1 });
+  renderBill();
+  showToast(`✅ ${item.ItemName} added`, 'success');
+}
+
+function changeQty(itemId, delta) {
+  const entry = billItems.find(item => item.item.ItemID === itemId);
+  if (!entry) return;
+  entry.qty += delta;
+  if (entry.qty <= 0) billItems = billItems.filter(item => item.item.ItemID !== itemId);
+  renderBill();
+}
+
+function removeFromBill(itemId) {
+  billItems = billItems.filter(item => item.item.ItemID !== itemId);
+  renderBill();
+}
+
+function recalcAll() {
+  renderBill();
+}
+
+function renderBill() {
+  const pax = parseInt(document.getElementById('bill-pax').value, 10) || 1;
+  const container = document.getElementById('bill-items');
+  document.getElementById('pax-display').textContent = pax;
+
+  if (!billItems.length) {
+    container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon">🛒</div>No items added yet.<br>Click + to add items.</div>`;
+    document.getElementById('subtotal').textContent = '₱0.00';
+    document.getElementById('grand-total').textContent = '₱0.00';
+    document.getElementById('item-count').textContent = '0 items';
+    return;
+  }
+
+  let subtotal = 0;
+  container.innerHTML = billItems.map(entry => {
+    const lineTotal = getLineTotal(entry.item, pax, entry.qty);
+    subtotal += lineTotal;
+    const imgUrl = getItemImage(entry.item);
+    return `
+      <div class="bill-item">
+        <div class="bill-item-thumb">
+          ${imgUrl
+            ? `<img src="${imgUrl}" alt="${escapeHtml(entry.item.ItemName)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="bill-item-thumb-fallback" style="display:none;font-size:10px;color:#ccc">No Photo</div>`
+            : `<div class="bill-item-thumb-fallback" style="display:flex;font-size:10px;color:#ccc">No Photo</div>`
+          }
+        </div>
+        <div class="bill-item-info">
+          <div class="bill-item-name">${escapeHtml(entry.item.ItemName)}</div>
+          <div class="bill-item-price">${pricingLabel(entry.item)}</div>
+          <div class="bill-item-line">${escapeHtml(getBreakdownLabel(entry.item, pax, entry.qty))}</div>
+          <button class="remove-btn" onclick="removeFromBill(${entry.item.ItemID})">✕ Remove</button>
+        </div>
+        <div class="bill-qty">
+          <button class="qty-btn" onclick="changeQty(${entry.item.ItemID}, -1)">−</button>
+          <span class="qty-val">${entry.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${entry.item.ItemID}, 1)">+</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  document.getElementById('subtotal').textContent = formatMoney(subtotal);
+  document.getElementById('grand-total').textContent = formatMoney(subtotal);
+  document.getElementById('item-count').textContent = `${billItems.length} item${billItems.length !== 1 ? 's' : ''}`;
+}
+
+function fillEventAddressFromCustomer(force = false) {
+  const select = document.getElementById('bill-customer');
+  const addressField = document.getElementById('bill-eventaddress');
+  if (!select || !addressField || (!force && addressField.value.trim())) return;
+  const customer = allCustomers.find(entry => String(entry.CustomerID) === String(select.value));
+  if (customer?.Address) addressField.value = customer.Address;
+}
+
+async function placeOrder() {
+  const customerID = document.getElementById('bill-customer').value;
+  const eventDate = document.getElementById('bill-eventdate').value;
+  const eventAddress = document.getElementById('bill-eventaddress').value.trim();
+  const pax = parseInt(document.getElementById('bill-pax').value, 10);
+  if (!customerID) return showToast('⚠️ Please select a customer', 'error');
+  if (!eventDate) return showToast('⚠️ Please select an event date', 'error');
+  if (eventDate < minEventDate()) return showToast(`⚠️ Event date must be at least ${MIN_ORDER_LEAD_DAYS} days from today`, 'error');
+  if (!eventAddress) return showToast('⚠️ Please enter the event address', 'error');
+  if (!pax || pax < 1) return showToast('⚠️ Please enter number of pax', 'error');
+  if (!billItems.length) return showToast('⚠️ Please add at least one item', 'error');
+
+  const totalAmount = billItems.reduce((sum, entry) => sum + getLineTotal(entry.item, pax, entry.qty), 0);
+  const items = billItems.map(entry => ({ ItemID: entry.item.ItemID, Quantity: entry.qty }));
+  const btn = document.querySelector('.place-order-btn');
+  btn.textContent = '⏳ Placing order...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(`${API}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        CustomerID: customerID,
+        OrderDate: new Date().toISOString().split('T')[0],
+        EventDate: eventDate,
+        EventAddress: eventAddress,
+        Pax: pax,
+        TotalAmount: totalAmount.toFixed(2),
+        items,
+        _role: role,
+        _customer_id: customerId
+      })
+    });
+    const data = await res.json();
+    btn.textContent = '🛒 Place Order';
+    btn.disabled = false;
+    if (!res.ok) return showToast(`❌ ${data.message || 'Could not place order'}`, 'error');
+
+    showToast(`✅ Order #${data.order_id} placed! ${formatMoney(totalAmount)}`, 'success');
+    billItems = [];
+    document.getElementById('bill-customer').value = (role === 'customer' || selectedCustomerId) ? customerID : '';
+    document.getElementById('bill-eventdate').value = '';
+    if (role !== 'customer' && !selectedCustomerId) document.getElementById('bill-eventaddress').value = '';
+    document.getElementById('bill-pax').value = '';
+    renderBill();
+  } catch (e) {
+    btn.textContent = '🛒 Place Order';
+    btn.disabled = false;
+    showToast('🔌 Cannot connect to server', 'error');
+  }
+}
+
+async function toggleAvail(itemId, isChecked) {
+  const item = allItems.find(entry => entry.ItemID === itemId);
+  if (!item) return;
+  item.Available = isChecked ? 1 : 0;
+  updateGridCard(item);
+  try {
+    await fetch(`${API}/menu/${itemId}/availability`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Available: isChecked })
+    });
+    if (detailModalState.item?.ItemID === itemId) {
+      detailModalState.item.Available = item.Available;
+      renderDetailModal();
+    }
+    showToast(isChecked ? `✅ "${item.ItemName}" is now visible` : `🚫 "${item.ItemName}" is now hidden`);
+  } catch (e) {
+    showToast('⚠️ Could not save availability', 'error');
+  }
+}
+
+async function loadPopularDishes() {
+  const container = document.getElementById('popular-list');
+  try {
+    const res = await fetch(`${API}/menu-items/top3`);
+    const items = await res.json();
+    if (!Array.isArray(items) || !items.length) {
+      container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon">📊</div>No order data yet.<br>Popular dishes will appear here.</div>`;
+      return;
+    }
+    const medals = ['🥇', '🥈', '🥉'];
+    container.innerHTML = items.map((item, index) => {
+      const imgUrl = getItemImage(item);
+      return `
+        <div class="bill-item" style="gap:10px">
+          <div style="font-size:24px;width:28px;text-align:center;flex-shrink:0">${medals[index]}</div>
+          <div class="bill-item-thumb">
+            ${imgUrl
+              ? `<img src="${imgUrl}" alt="${escapeHtml(item.ItemName)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="bill-item-thumb-fallback" style="display:none;font-size:11px;color:#ccc;text-align:center">No Photo</div>`
+              : `<div class="bill-item-thumb-fallback" style="display:flex;font-size:11px;color:#ccc;text-align:center">No Photo</div>`}
+          </div>
+          <div class="bill-item-info">
+            <div class="bill-item-name">${escapeHtml(item.ItemName)}</div>
+            <div class="bill-item-price">${pricingLabel(item)}</div>
+            <div class="bill-item-line">${Number(item.total_ordered || 0)} total ordered</div>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon">⚠️</div>Could not load popular dishes.</div>`;
+  }
+}
+
+async function deleteMenu(itemId, itemName, trigger = null) {
+  if (deletingMenuIds.has(itemId)) return;
+  const confirmed = await new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;';
+    overlay.innerHTML = `
+      <div style="background:#fff;border-radius:16px;padding:28px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:Segoe UI,sans-serif;">
+        <div style="font-size:16px;font-weight:700;color:#2c2c2c;margin-bottom:10px;">Delete "${itemName}"?</div>
+        <div style="font-size:13px;color:#666;margin-bottom:22px;">This will permanently remove the dish from the menu. This cannot be undone.</div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;">
+          <button id="_del_cancel" style="padding:10px 18px;border-radius:10px;border:none;background:#f5f5f5;color:#666;font-weight:700;cursor:pointer;font-size:13px;">Cancel</button>
+          <button id="_del_confirm" style="padding:10px 18px;border-radius:10px;border:none;background:#c62828;color:#fff;font-weight:700;cursor:pointer;font-size:13px;">Delete</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('#_del_confirm').onclick = () => { document.body.removeChild(overlay); resolve(true); };
+    overlay.querySelector('#_del_cancel').onclick  = () => { document.body.removeChild(overlay); resolve(false); };
+  });
+  if (!confirmed) return;
+  const card = document.getElementById(`card-${itemId}`);
+  deletingMenuIds.add(itemId);
+  if (trigger) {
+    trigger.disabled = true;
+    trigger.style.cursor = 'wait';
+    trigger.style.opacity = '0.7';
+  }
+  try {
+    const res = await requestWithTimeout(`${API}/menu-items/${itemId}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const message = data.message || 'Could not delete dish.';
+      return showToast(`❌ ${message}`, 'error');
+    }
+    if (card) {
+      card.style.transition = 'opacity 0.25s, transform 0.25s';
+      card.style.opacity = '0';
+      card.style.transform = 'scale(0.95)';
+      await new Promise(resolve => setTimeout(resolve, 260));
+    }
+    allItems = allItems.filter(item => item.ItemID !== itemId);
+    removeGridCard(itemId);
+    closeDishModal(true);
+    if (role !== 'customer') loadPopularDishes();
+    showToast(`🗑️ "${itemName}" deleted.`, 'success');
+  } catch (e) {
+    showToast('⚠️ Could not delete dish. Please try again.', 'error');
+  } finally {
+    deletingMenuIds.delete(itemId);
+    if (trigger && trigger.isConnected) {
+      trigger.disabled = false;
+      trigger.style.cursor = 'pointer';
+      trigger.style.opacity = '1';
+    }
+  }
+}
+
+async function loadCustomers() {
+  try {
+    const select = document.getElementById('bill-customer');
+    if (!customerId) {
+      select.innerHTML = '<option value="">Profile not linked</option>';
+      select.disabled = true;
+      return;
+    }
+    const res = await fetch(`${API}/customers/${customerId}`);
+    if (!res.ok) throw new Error();
+    const mine = await res.json();
+    allCustomers = [mine];
+    select.innerHTML = `<option value="${mine.CustomerID}">${mine.FirstName} ${mine.LastName}</option>`;
+    select.disabled = true;
+    if (mine.Address) document.getElementById('bill-eventaddress').value = mine.Address;
+  } catch (e) {
+    console.error('Could not load customer profile', e);
+  }
+}
+
+function showToast(message, type = '') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast-msg show ${type}`;
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => { toast.className = 'toast-msg'; }, 2500);
+}
+
+async function openDetailModal(itemId) {
+  detailModalState = { open: true, loading: true, mode: 'view', item: null, carouselIndex: 0 };
+  renderDetailModal();
+  try {
+    const res = await fetch(`${API}/menu-items/${itemId}`);
+    const item = await res.json();
+    detailModalState.item = item;
+    detailModalState.loading = false;
+    detailModalState.carouselIndex = 0;
+    renderDetailModal();
+  } catch (e) {
+    detailModalState.loading = false;
+    renderDetailModal('<div style="padding:40px;text-align:center;color:#c62828">Could not load dish details.</div>');
+  }
+}
+
+function openAddModal() {
+  formState = createInitialFormState();
+  detailModalState = { open: true, loading: false, mode: 'form', item: null, carouselIndex: 0 };
+  renderDetailModal();
+}
+
+function openEditModal(itemId, event) {
+  if (event) event.stopPropagation();
+  const item = allItems.find(entry => entry.ItemID === itemId);
+  if (!item) return;
+  formState = createInitialFormState(item);
+  detailModalState = { open: true, loading: false, mode: 'form', item, carouselIndex: 0 };
+  renderDetailModal();
+}
+
+function closeDishModal(force = false) {
+  if (!force && detailModalState.mode === 'form') return;
+  detailModalState = { open: false, loading: false, mode: 'view', item: null, carouselIndex: 0 };
+  formState = null;
+  renderDetailModal();
+}
+
+function createInitialFormState(item = null) {
+  const allPhotos = item ? [item.image_path, ...(item.photos || []).map(photo => photo.image_path)] : [];
+  const slots = Array.from({ length: 5 }, (_, index) => ({
+    existingPath: allPhotos[index] || null,
+    file: null,
+    preview: allPhotos[index] ? `${API}/${normalizeImagePath(allPhotos[index])}` : null,
+    removed: false
+  }));
+  const baseState = {
+    itemId: item?.ItemID || null,
+    ItemName: item?.ItemName || '',
+    Description: item?.Description || '',
+    Category: item?.Category || 'Main Course',
+    pricing_type: item?.pricing_type || 'per_pax',
+    PricePerPax: item?.PricePerPax ?? '',
+    serves_up_to: item?.serves_up_to ?? '',
+    IsHalal: !!item?.IsHalal,
+    Available: item ? item.Available !== 0 : true,
+    slots,
+    saving: false
+  };
+  return applyDishDraft(baseState, item?.ItemID || null);
+}
+
+function renderDetailModal(customBody = null) {
+  const modal = document.getElementById('dish-modal');
+  const body = document.getElementById('dish-modal-content');
+
+  // Keep typed values before any form-mode re-render replaces the DOM.
+  if (detailModalState.open && detailModalState.mode === 'form' && formState && body.innerHTML) {
+    syncFormState();
+  }
+
+  modal.style.display = detailModalState.open ? 'flex' : 'none';
+  if (!detailModalState.open) {
+    body.innerHTML = '';
+    return;
+  }
+
+  if (customBody) {
+    body.innerHTML = customBody;
+    return;
+  }
+
+  if (detailModalState.loading) {
+    body.innerHTML = '<div style="padding:40px;text-align:center;color:#999">Loading dish details...</div>';
+    return;
+  }
+
+  body.innerHTML = detailModalState.mode === 'form' ? renderDishForm() : renderDishDetail();
+}
+
+function renderDishDetail() {
+  const item = detailModalState.item;
+  if (!item) return '<div style="padding:40px;text-align:center;color:#999">Dish not found.</div>';
+  const photos = getCardPhotoUrls(item);
+  const activeIndex = Math.min(detailModalState.carouselIndex || 0, Math.max(photos.length - 1, 0));
+  const hasCarousel = item.Category === 'Package' && photos.length > 1;
+  const avail = isAvailable(item);
+  return `
+    <div class="dish-modal-header">
+      <div>
+        <div style="font-size:17px;font-weight:800;color:inherit">Dish Details</div>
+        <div style="font-size:12px;color:#999;margin-top:3px">Menu item preview</div>
+      </div>
+      <button class="dish-modal-close" onclick="closeDishModal(true)">✕</button>
+    </div>
+    <div class="dish-modal-body">
+      <div class="detail-hero">
+        ${photos.length
+          ? `<img src="${photos[activeIndex]}" alt="${escapeHtml(item.ItemName)}">`
+          : `<div class="detail-hero-fallback">No Photo</div>`}
+        ${hasCarousel ? `<button class="detail-arrow left" onclick="moveDetailCarousel(-1)">‹</button>
+        <button class="detail-arrow right" onclick="moveDetailCarousel(1)">›</button>
+        <div class="detail-dots">${photos.map((_, index) => `<span class="detail-dot ${index === activeIndex ? 'active' : ''}" onclick="setDetailCarousel(${index})"></span>`).join('')}</div>` : ''}
+      </div>
+      <h3 class="detail-title">${escapeHtml(item.ItemName)}</h3>
+      <div class="detail-meta">
+        <span class="badge-pill badge-muted">${escapeHtml(item.Category)}</span>
+        ${item.IsHalal ? '<span class="badge-pill badge-halal">Halal</span>' : ''}
+        <span class="badge-pill ${avail ? 'badge-status-on' : 'badge-status-off'}">${avail ? 'Available' : 'Unavailable'}</span>
+      </div>
+      <div class="detail-description">${escapeHtml(item.Description || 'No description provided.')}</div>
+      <div class="detail-panels">
+        <div class="detail-panel">
+          <div class="detail-panel-label">Pricing</div>
+          <div class="detail-panel-value">${pricingDetailLabel(item)}</div>
+          ${(item.pricing_type || 'per_pax') === 'flat_rate' && item.serves_up_to ? `<div class="detail-panel-note">Serves up to ${item.serves_up_to} people</div>` : ''}
+        </div>
+        <div class="detail-panel">
+          <div class="detail-panel-label">Times Ordered</div>
+          <div class="detail-panel-value">${Number(item.total_ordered || 0)}</div>
+          <div class="detail-panel-note">Pulled from order data</div>
+        </div>
+        <div class="detail-panel">
+          <div class="detail-panel-label">Popularity Rank</div>
+          <div class="detail-panel-value">${Number(item.popularity_rank || 0) > 0 ? `#${item.popularity_rank}` : 'Not ranked yet'}</div>
+          <div class="detail-panel-note">${Number(item.order_count || 0)} order${Number(item.order_count || 0) !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      <div class="modal-actions">
+        ${canManageMenu() ? '<button class="modal-btn primary" onclick="startEditFromDetail()">Edit Dish</button>' : ''}
+        <button class="modal-btn secondary" onclick="closeDishModal(true)">Close</button>
+      </div>
+    </div>`;
+}
+
+function renderDishForm() {
+  const state = formState;
+  const isPackage = state.Category === 'Package';
+  return `
+    <div class="dish-modal-header">
+      <div>
+        <div style="font-size:17px;font-weight:800;color:inherit">${state.itemId ? 'Edit Dish' : 'Add New Dish'}</div>
+        <div id="dish-form-subtitle" style="font-size:12px;color:#999;margin-top:3px">${isPackage ? 'Package photos: up to 5 images' : 'Single dish photo upload'}</div>
+      </div>
+      <button class="dish-modal-close" onclick="cancelDishForm()">✕</button>
+    </div>
+    <div class="dish-modal-body">
+      <div class="dish-form-grid">
+        <div class="dish-field full">
+          <label class="dish-label">Dish Name *</label>
+          <input class="dish-input" id="dish-name-input" value="${escapeHtml(state.ItemName)}" placeholder="e.g. Beef Rendang" oninput="handleFormDraftInput()">
+        </div>
+        <div class="dish-field">
+          <label class="dish-label">Category *</label>
+          <select class="dish-select" id="dish-category-input" onchange="handleCategoryChange(this.value)">
+            ${['Main Course','Rice & Pasta','Appetizer','Side Dish','Dessert','Beverage','Package'].map(category => `<option value="${category}" ${state.Category === category ? 'selected' : ''}>${emojiMap[category]} ${category}</option>`).join('')}
+          </select>
+        </div>
+        <div class="dish-field">
+          <label class="dish-label">Pricing Type *</label>
+          <select class="dish-select" id="dish-pricing-type-input" onchange="handlePricingTypeChange(this.value)">
+            <option value="per_pax" ${state.pricing_type === 'per_pax' ? 'selected' : ''}>Per Pax</option>
+            <option value="flat_rate" ${state.pricing_type === 'flat_rate' ? 'selected' : ''}>Per Serve / Flat Rate</option>
+          </select>
+        </div>
+        <div class="dish-field">
+          <label class="dish-label" id="dish-price-label">${state.pricing_type === 'flat_rate' ? 'Flat Rate Price (₱) *' : 'Price per Pax (₱) *'}</label>
+          <input class="dish-input" id="dish-price-input" type="number" min="0" value="${escapeHtml(state.PricePerPax)}" placeholder="e.g. 150" oninput="handleFormDraftInput()">
+        </div>
+        <div class="dish-field" id="dish-serves-field" style="${state.pricing_type === 'flat_rate' ? '' : 'display:none'}">
+          <label class="dish-label">Serves up to (number of people) *</label>
+          <input class="dish-input" id="dish-serves-up-to-input" type="number" min="1" value="${escapeHtml(state.serves_up_to)}" placeholder="e.g. 25" oninput="handleFormDraftInput()">
+        </div>
+        <div class="dish-field full">
+          <label class="dish-label">Description</label>
+          <textarea class="dish-textarea" id="dish-description-input" rows="4" placeholder="Describe the dish..." oninput="handleFormDraftInput()">${escapeHtml(state.Description)}</textarea>
+        </div>
+      </div>
+      <div class="dish-check-row">
+        <label class="dish-check"><input type="checkbox" id="dish-halal-input" ${state.IsHalal ? 'checked' : ''} onchange="handleFormDraftInput()"> Is Halal</label>
+        <label class="dish-check"><input type="checkbox" id="dish-available-input" ${state.Available ? 'checked' : ''} onchange="handleFormDraftInput()"> Available</label>
+      </div>
+      <div class="dish-field">
+        <label class="dish-label">Photos</label>
+        <div class="photo-grid">
+          ${Array.from({ length: 5 }, (_, index) => renderPhotoSlot(index)).join('')}
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="cancelDishForm()">Cancel</button>
+        <button class="modal-btn primary" onclick="saveDish()" ${state.saving ? 'disabled' : ''}>${state.saving ? 'Saving...' : (state.itemId ? 'Save Changes' : 'Save Dish')}</button>
+      </div>
+    </div>`;
+}
+
+function renderPhotoSlot(index) {
+  const slot = formState.slots[index];
+  const labels = ['Cover Photo', 'Photo 2', 'Photo 3', 'Photo 4', 'Photo 5'];
+  const hasImage = slot.preview && !slot.removed;
+  const hideByCategory = formState.Category !== 'Package' && index > 0;
+  return `
+    <div class="photo-slot" data-slot-index="${index}" onclick="triggerPhotoUpload(${index})" style="${hideByCategory ? 'display:none' : ''}">
+      ${hasImage
+        ? `<img src="${slot.preview}" alt="${labels[index]}">`
+        : `<div class="photo-slot-empty"><div style="font-size:28px;margin-bottom:6px">📷</div>${labels[index]}<div style="font-size:10px;color:#ccc;margin-top:4px">Click to upload</div></div>`}
+      <input type="file" id="dish-photo-input-${index}" accept="image/*" style="display:none" onchange="handlePhotoSelected(${index}, this.files[0])">
+      <div class="photo-slot-meta">${labels[index]}</div>
+      ${hasImage ? `<button class="photo-remove" onclick="removePhotoSlot(${index}, event)">✕</button>` : ''}
+    </div>`;
+}
+
+function triggerPhotoUpload(index) {
+  document.getElementById(`dish-photo-input-${index}`)?.click();
+}
+
+function handlePhotoSelected(index, file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = event => {
+    formState.slots[index].file = file;
+    formState.slots[index].preview = event.target.result;
+    formState.slots[index].removed = false;
+    saveDishDraft();
+    updatePhotoSlotDOM(index);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhotoSlot(index, event) {
+  event.stopPropagation();
+  formState.slots[index].file = null;
+  formState.slots[index].preview = null;
+  formState.slots[index].removed = true;
+  saveDishDraft();
+  updatePhotoSlotDOM(index);
+}
+
+function updatePhotoSlotDOM(index) {
+  const slotNode = document.querySelector(`.photo-slot[data-slot-index="${index}"]`);
+  if (!slotNode) return;
+  slotNode.outerHTML = renderPhotoSlot(index);
+  updateDishFormDynamicSections();
+}
+
+function syncFormState() {
+  if (!formState) return;
+  const nameEl = document.getElementById('dish-name-input');
+  const descEl = document.getElementById('dish-description-input');
+  const categoryEl = document.getElementById('dish-category-input');
+  const pricingTypeEl = document.getElementById('dish-pricing-type-input');
+  const priceEl = document.getElementById('dish-price-input');
+  const servesEl = document.getElementById('dish-serves-up-to-input');
+  const halalEl = document.getElementById('dish-halal-input');
+  const availEl = document.getElementById('dish-available-input');
+  if (nameEl) formState.ItemName = nameEl.value;
+  if (descEl) formState.Description = descEl.value;
+  if (categoryEl) formState.Category = categoryEl.value;
+  if (pricingTypeEl) formState.pricing_type = pricingTypeEl.value;
+  if (priceEl) formState.PricePerPax = priceEl.value;
+  if (servesEl) formState.serves_up_to = servesEl.value;
+  if (halalEl) formState.IsHalal = halalEl.checked;
+  if (availEl) formState.Available = availEl.checked;
+}
+
+function handleFormDraftInput() {
+  syncFormState();
+  saveDishDraft();
+}
+
+function handleCategoryChange(value) {
+  syncFormState();
+  formState.Category = value;
+  saveDishDraft();
+  updateDishFormDynamicSections();
+}
+
+function handlePricingTypeChange(value) {
+  syncFormState();
+  formState.pricing_type = value;
+  if (value !== 'flat_rate') {
+    formState.serves_up_to = '';
+    const servesInput = document.getElementById('dish-serves-up-to-input');
+    if (servesInput) servesInput.value = '';
+  }
+  saveDishDraft();
+  updateDishFormDynamicSections();
+}
+
+function updateDishFormDynamicSections() {
+  if (!formState || detailModalState.mode !== 'form') return;
+  const isPackage = formState.Category === 'Package';
+  const isFlatRate = formState.pricing_type === 'flat_rate';
+  const subtitle = document.getElementById('dish-form-subtitle');
+  const priceLabel = document.getElementById('dish-price-label');
+  const servesField = document.getElementById('dish-serves-field');
+  if (subtitle) subtitle.textContent = isPackage ? 'Package photos: up to 5 images' : 'Single dish photo upload';
+  if (priceLabel) priceLabel.textContent = isFlatRate ? 'Flat Rate Price (₱) *' : 'Price per Pax (₱) *';
+  if (servesField) servesField.style.display = isFlatRate ? '' : 'none';
+  document.querySelectorAll('.photo-slot[data-slot-index]').forEach(node => {
+    const index = Number(node.getAttribute('data-slot-index'));
+    node.style.display = (!isPackage && index > 0) ? 'none' : '';
+  });
+}
+
+function startEditFromDetail() {
+  formState = createInitialFormState(detailModalState.item);
+  detailModalState.mode = 'form';
+  renderDetailModal();
+}
+
+function cancelDishForm() {
+  if (detailModalState.item) {
+    detailModalState.mode = 'view';
+    formState = null;
+    renderDetailModal();
+  } else {
+    closeDishModal(true);
+  }
+}
+
+function moveDetailCarousel(delta) {
+  const photos = getCardPhotoUrls(detailModalState.item);
+  if (photos.length < 2) return;
+  detailModalState.carouselIndex = ((detailModalState.carouselIndex || 0) + delta + photos.length) % photos.length;
+  renderDetailModal();
+}
+
+function setDetailCarousel(index) {
+  detailModalState.carouselIndex = index;
+  renderDetailModal();
+}
+
+async function saveDish() {
+  const editingExisting = Boolean(formState.itemId);
+  formState.ItemName = document.getElementById('dish-name-input').value.trim();
+  formState.Description = document.getElementById('dish-description-input').value.trim();
+  formState.Category = document.getElementById('dish-category-input').value;
+  formState.pricing_type = document.getElementById('dish-pricing-type-input').value;
+  formState.PricePerPax = document.getElementById('dish-price-input').value;
+  formState.serves_up_to = document.getElementById('dish-serves-up-to-input')?.value || '';
+  formState.IsHalal = document.getElementById('dish-halal-input').checked;
+  formState.Available = document.getElementById('dish-available-input').checked;
+  saveDishDraft();
+  const saveButton = document.querySelector('.modal-btn.primary');
+
+  if (!formState.ItemName || !formState.Category || formState.PricePerPax === '') {
+    window.AppUI?.shakeInvalid(['dish-name-input', 'dish-category-input', 'dish-price-input']);
+    return showToast('⚠️ Name, category, and price are required.', 'error');
+  }
+  if (formState.pricing_type === 'flat_rate' && (!formState.serves_up_to || Number(formState.serves_up_to) < 1)) {
+    window.AppUI?.shakeInvalid(['dish-serves-up-to-input']);
+    return showToast('⚠️ Enter a valid serves up to value for flat rate items.', 'error');
+  }
+
+  const formData = new FormData();
+  formData.append('ItemName', formState.ItemName);
+  formData.append('Category', formState.Category);
+  formData.append('pricing_type', formState.pricing_type);
+  formData.append('PricePerPax', formState.PricePerPax);
+  formData.append('Description', formState.Description);
+  formData.append('serves_up_to', formState.pricing_type === 'flat_rate' ? formState.serves_up_to : '');
+  formData.append('IsHalal', formState.IsHalal ? '1' : '0');
+  formData.append('Available', formState.Available ? '1' : '0');
+
+  formState.slots.forEach((slot, index) => {
+    if (slot.file) formData.append(`image_${index + 1}`, slot.file);
+    if (index === 0 && slot.removed && !slot.file) formData.append('remove_cover_image', '1');
+    if (index > 0 && slot.removed && !slot.file) formData.append(`remove_photo_${index}`, '1');
+  });
+
+  formState.saving = true;
+  window.AppUI?.setButtonLoading(saveButton, true, formState.itemId ? 'Saving Changes' : 'Saving Dish');
+  renderDetailModal();
+  try {
+    const url = formState.itemId ? `${API}/menu-items/${formState.itemId}` : `${API}/menu-items`;
+    const method = formState.itemId ? 'PUT' : 'POST';
+    const res = await fetch(url, { method, body: formData });
+    const data = await res.json();
+    formState.saving = false;
+    if (!res.ok) {
+      window.AppUI?.setButtonLoading(saveButton, false);
+      renderDetailModal();
+      return showToast(`❌ ${data.message || 'Error saving dish.'}`, 'error');
+    }
+
+    const savedItem = data.item;
+    if (savedItem) upsertMenuItem(savedItem);
+    if (savedItem) updateGridCard(savedItem, { preferTop: !editingExisting });
+    if (role !== 'customer') loadPopularDishes();
+    showToast(formState.itemId ? '✅ Dish updated!' : '✅ Dish added!', 'success');
+    clearDishDraft(editingExisting ? formState.itemId : null);
+
+    if (savedItem) {
+      detailModalState = { open: true, loading: false, mode: 'view', item: savedItem, carouselIndex: 0 };
+      formState = null;
+      renderDetailModal();
+      window.AppUI?.flashSuccess(document.querySelector('.dish-modal-card'));
+    } else {
+      closeDishModal(true);
+    }
+  } catch (e) {
+    formState.saving = false;
+    window.AppUI?.setButtonLoading(saveButton, false);
+    renderDetailModal();
+    showToast('🔌 Cannot connect to server', 'error');
+  }
+}
+
+function upsertMenuItem(item) {
+  const index = allItems.findIndex(entry => entry.ItemID === item.ItemID);
+  if (index === -1) allItems.unshift(item);
+  else allItems[index] = item;
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  document.getElementById('dark-icon').innerHTML = document.body.classList.contains('dark') ? icon('sun') : icon('moon');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+}
+
+function logout() {
+  if (confirm('Logout?')) {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  }
+}
+
+document.addEventListener('click', event => {
+  if (event.target === document.getElementById('dish-modal') && detailModalState.mode !== 'form') {
+    closeDishModal(true);
+  }
+});
+
+window.onload = () => {
+  syncEventDateMinimum();
+  document.getElementById('dark-icon').innerHTML = icon('moon');
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
+    document.getElementById('dark-icon').innerHTML = icon('sun');
+  }
+  if (canManageMenu()) {
+    document.getElementById('add-dish-btn').style.display = 'block';
+  }
+  if (role === 'customer') {
+    document.getElementById('panel-popular').style.display = 'none';
+    document.getElementById('panel-bills').style.display = 'flex';
+    loadCustomers();
+    renderBill();
+  } else {
+    document.getElementById('panel-popular').style.display = 'flex';
+    document.getElementById('panel-bills').style.display = 'none';
+    loadPopularDishes();
+  }
+  loadMenu();
+};
+</script>
+<div id="dish-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.62);backdrop-filter:blur(4px);align-items:center;justify-content:center;">
+  <div class="dish-modal-card">
+    <div id="dish-modal-content"></div>
+  </div>
+</div>
+
+<script src="settings.js"></script>
+</body>
+</html>

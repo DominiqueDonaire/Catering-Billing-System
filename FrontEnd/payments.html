@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Payments</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    (function () {
+      const size = Number(localStorage.getItem('fontSize'));
+      const resolved = [13, 15, 17, 19].includes(size) ? size : 15;
+      document.documentElement.style.fontSize = '15px';
+      document.documentElement.style.zoom = String(resolved / 15);
+    })();
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --orange:#e07b00; --orange-light:#fff5ea;
+      --green:#1b7a4b; --red:#c62828; --blue:#1565c0;
+      --gray-bg:#f7f7f5; --sidebar-bg:#fff; --card-bg:#fff;
+      --text:#1a1a1a; --text-muted:#777; --border:#ebebeb;
+      --thead-bg:#fafafa; --shadow:0 1px 4px rgba(0,0,0,0.07);
+    }
+    body.dark {
+      --gray-bg:#181a1b; --sidebar-bg:#202124; --card-bg:#202124;
+      --text:#e8eaed; --text-muted:#9aa0a6; --border:#303134;
+      --thead-bg:#26282c; --shadow:0 1px 4px rgba(0,0,0,0.3);
+    }
+    body { font-family:'Segoe UI',sans-serif; background:var(--gray-bg); color:var(--text); display:flex; min-height:100vh; transition:background 0.2s,color 0.2s; }
+    .sidebar { width:220px; background:var(--sidebar-bg); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:24px 0; position:fixed; height:100vh; z-index:200; overflow-y:auto; transition:background 0.2s,border-color 0.2s; }
+    .sidebar-logo { text-align:center; padding:0 20px 24px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+    .sidebar-logo .logo-icon {
+      width: 48px; height: 48px; margin: 0 auto;
+      border-radius: 14px; background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+      display: flex; align-items: center; justify-content: center; color: #c96e00;
+    }
+    body.dark .sidebar-logo .logo-icon { background:#2b2d31; color:#f5c36a; }
+    .sidebar-logo h6 { font-size:13px; font-weight:700; color:var(--orange); margin-top:6px; }
+    .nav-item { display:flex; align-items:center; gap:12px; padding:12px 24px; cursor:pointer; color:var(--text-muted); font-size:14px; font-weight:500; text-decoration:none; transition:all 0.15s; border-left:3px solid transparent; }
+    .nav-item:hover,.nav-item.active { background:var(--orange-light); color:var(--orange); border-left-color:var(--orange); }
+    body.dark .nav-item:hover,body.dark .nav-item.active { background:#2b2d31; color:#f0c040; border-left-color:#f0c040; }
+    .sidebar-footer { margin-top:auto; padding:16px 24px; border-top:1px solid var(--border); }
+    .logout-btn { display:flex; align-items:center; gap:10px; color:#e53935; font-size:14px; font-weight:500; cursor:pointer; background:none; border:none; padding:0; }
+    .main { margin-left:220px; flex:1; display:flex; flex-direction:column; min-height:100vh; min-width:0; }
+    .topbar { background:var(--card-bg); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:150; }
+    .topbar h5 { font-size:17px; font-weight:700; color:var(--text); margin:0; }
+    .dark-toggle {
+      width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--border);
+      background: var(--card-bg); color: var(--text-muted); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    body.dark .dark-toggle { background:#2b2d31; border-color:#303134; color:#e8eaed; }
+    .nav-icon, .ui-icon, .logo-icon svg {
+      width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9;
+      stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+    }
+    .nav-icon-slot {
+      width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-icon svg { width:24px; height:24px; }
+    .content { padding:28px 28px 40px; flex:1; overflow-y:auto; }
+    .summary-banner { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+    .summary-card { background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:20px 22px; display:flex; align-items:center; gap:16px; box-shadow:var(--shadow); transition:background 0.2s,border-color 0.2s; }
+    .icon-wrap { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .s-label { font-size:11px; color:var(--text-muted); font-weight:600; letter-spacing:0.4px; text-transform:uppercase; margin-bottom:4px; }
+    .s-value { font-size:22px; font-weight:700; line-height:1; }
+    .summary-card.orange .icon-wrap { background:#fff5ea; }
+    .summary-card.green  .icon-wrap { background:#e8f5ee; }
+    .summary-card.red    .icon-wrap { background:#fce4ec; }
+    .summary-card.orange .s-value   { color:var(--orange); }
+    .summary-card.green  .s-value   { color:var(--green); }
+    .summary-card.red    .s-value   { color:var(--red); }
+    .card-box { background:var(--card-bg); border-radius:14px; padding:24px; box-shadow:var(--shadow); margin-bottom:20px; border:1px solid var(--border); transition:background 0.2s,border-color 0.2s; }
+    .section-title { font-size:15px; font-weight:700; color:var(--text); margin-bottom:18px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .badge-count { background:var(--orange-light); color:var(--orange); font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; }
+    .form-label { font-weight:600; font-size:12px; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:6px; display:block; }
+    .form-control,.form-select { border:1.5px solid var(--border); border-radius:9px; font-size:14px; padding:10px 14px; background:var(--card-bg); color:var(--text); transition:border-color 0.15s,background 0.2s; width:100%; }
+    .form-control:focus,.form-select:focus { border-color:var(--orange); box-shadow:0 0 0 3px rgba(224,123,0,0.1); outline:none; }
+    body.dark .form-control,body.dark .form-select { background:#2b2d31; border-color:#303134; color:#e8eaed; }
+    body.dark .form-select option { background:#202124; }
+    .table-wrap { border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+    table { font-size:13.5px; width:100%; border-collapse:collapse; }
+    thead tr { background:var(--thead-bg); }
+    thead th { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); padding:12px 16px; border-bottom:1px solid var(--border); }
+    tbody td { padding:13px 16px; border-bottom:1px solid var(--border); color:var(--text); vertical-align:middle; }
+    tbody tr:last-child td { border-bottom:none; }
+    tbody tr:hover { background:rgba(0,0,0,0.018); }
+    body.dark tbody tr:hover { background:rgba(255,255,255,0.04); }
+    .pill { display:inline-flex; align-items:center; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .pill-orange { background:#fff5ea; color:#e07b00; }
+    .pill-green  { background:#e8f5ee; color:#1b7a4b; }
+    .pill-red    { background:#fce4ec; color:#c62828; }
+    .pill-blue   { background:#e3f2fd; color:#1565c0; }
+    .pill-gray   { background:#f1f1f1; color:#555; }
+    body.dark .pill-gray { background:#2f3438; color:#9aa0a6; }
+    .balance-badge { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
+    .balance-badge.due  { background:#fce4ec; color:#c62828; }
+    .balance-badge.paid { background:#e8f5ee; color:#1b7a4b; }
+    .action-btn { border:none; border-radius:7px; padding:5px 11px; font-size:12px; font-weight:700; cursor:pointer; transition:all 0.15s; margin-right:3px; white-space:nowrap; }
+    .tab-btn-selected { background:#e65100 !important; color:#fff !important; }
+    .btn-verify  { background:#e8f5ee; color:#1b7a4b; }
+    .btn-verify:hover  { background:#1b7a4b; color:#fff; }
+    .btn-reject  { background:#fce4ec; color:#c62828; }
+    .btn-reject:hover  { background:#c62828; color:#fff; }
+    .btn-edit-p  { background:#e3f2fd; color:#1565c0; }
+    .btn-edit-p:hover  { background:#1565c0; color:#fff; }
+    .btn-delete  { background:#fce4ec; color:#c62828; }
+    .btn-delete:hover  { background:#c62828; color:#fff; }
+    .btn-pay     { background:var(--orange); color:#fff; }
+    .btn-pay:hover     { background:#c96e00; }
+    .btn-receipt { background:#e3f2fd; color:#1565c0; }
+    .btn-receipt:hover { background:#1565c0; color:#fff; }
+    .btn-pdf     { background:#f3e5f5; color:#6a1b9a; }
+    .btn-pdf:hover     { background:#6a1b9a; color:#fff; }
+    .filter-bar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:auto; }
+    .filter-btn { padding:5px 13px; border-radius:20px; font-size:12px; font-weight:600; border:1.5px solid var(--border); background:var(--card-bg); color:var(--text-muted); cursor:pointer; transition:all 0.15s; }
+    .filter-btn.active { background:var(--orange); color:#fff; border-color:var(--orange); }
+    .filter-input { padding:5px 14px; border-radius:20px; font-size:12px; border:1.5px solid var(--border); background:var(--card-bg); color:var(--text); outline:none; }
+    .filter-input:focus { border-color:var(--orange); }
+    /* Inline drawer (customer pay now) */
+    .drawer-row td { padding:0 !important; border:none !important; }
+    .drawer-inner { background:#fffbf5; border-top:2px solid var(--orange); border-bottom:1px solid var(--border); padding:20px 24px; animation:slideDown 0.2s ease; }
+    body.dark .drawer-inner { background:#181a1b; }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+    .drawer-header { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+    .drawer-title { font-size:15px; font-weight:700; color:var(--text); }
+    .drawer-badge { margin-left:auto; background:var(--orange); color:#fff; padding:4px 14px; border-radius:20px; font-size:13px; font-weight:700; }
+    .drawer-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:12px; }
+    .drawer-footer { display:flex; gap:10px; margin-top:16px; }
+    .drawer-save { background:var(--orange); color:#fff; border:none; border-radius:9px; padding:9px 20px; font-weight:700; font-size:13px; cursor:pointer; }
+    .drawer-save:hover { background:#c96e00; }
+    .drawer-cancel-btn { background:var(--card-bg); color:var(--text-muted); border:1.5px solid var(--border); border-radius:9px; padding:9px 16px; font-weight:600; font-size:13px; cursor:pointer; }
+    .auto-note { font-size:12px; color:#1b7a4b; font-weight:600; margin-top:5px; display:none; }
+    /* Bottom sheet overlay (admin edit) */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:200; display:flex; align-items:flex-end; justify-content:center; animation:fadeIn 0.15s; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .sheet { background:var(--card-bg); width:100%; max-width:700px; border-radius:16px 16px 0 0; padding:28px 32px 36px; box-shadow:0 -4px 30px rgba(0,0,0,0.15); animation:sheetUp 0.2s ease; }
+    @keyframes sheetUp { from{transform:translateY(40px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .sheet-title { font-size:16px; font-weight:700; color:var(--text); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+    .empty-state { text-align:center; padding:40px 20px; color:var(--text-muted); }
+    .empty-state .ei { font-size:40px; margin-bottom:10px; }
+    .empty-state p { font-size:14px; font-weight:500; }
+    #toast-pay { position:fixed; bottom:28px; right:28px; color:#fff; padding:12px 20px; border-radius:10px; font-size:13px; font-weight:600; box-shadow:0 4px 20px rgba(0,0,0,0.18); z-index:9999; display:none; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><span id="logo-icon-slot"></span></div>
+    <h6>CATERING BILLING</h6>
+  </div>
+  <a href="dashboard.html" class="nav-item"><span class="nav-icon-slot" data-icon="home"></span><span>Dashboard</span></a>
+  <a href="customers.html" class="nav-item" id="nav-customers"><span class="nav-icon-slot" data-icon="user"></span><span>Customers</span></a>
+  <a href="menu.html"      class="nav-item"><span class="nav-icon-slot" data-icon="menu"></span><span>Menu Items</span></a>
+  <a href="orders.html"    class="nav-item"><span class="nav-icon-slot" data-icon="clipboard"></span><span>Orders</span></a>
+  <a href="payments.html"  class="nav-item active"><span class="nav-icon-slot" data-icon="card"></span><span>Payments</span></a>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logout()"><span class="nav-icon-slot" data-icon="logout"></span><span>Logout</span></button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="topbar">
+    <h5><span style="display:inline-flex;align-items:center;gap:10px;"><span class="nav-icon-slot" data-icon="card"></span><span>Payment Management</span></span></h5>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="dark-toggle" onclick="toggleDark()"><span id="dark-icon"></span></button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="topbar-avatar" style="width:34px;height:34px;border-radius:50%;background:var(--orange);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">A</div>
+        <div>
+          <div id="topbar-user" style="font-size:14px;font-weight:600;line-height:1.2;color:var(--text);"></div>
+          <span id="topbar-role" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <div class="summary-banner">
+      <div class="summary-card orange">
+        <div class="icon-wrap">&#x1F4B0;</div>
+        <div><div class="s-label" id="total-label">Total Payments Collected</div><div class="s-value" id="total-collected">&#x20B1;0.00</div></div>
+      </div>
+      <div class="summary-card green">
+        <div class="icon-wrap">&#x2705;</div>
+        <div><div class="s-label">Total Verified</div><div class="s-value" id="total-verified">&#x20B1;0.00</div></div>
+      </div>
+      <div class="summary-card red">
+        <div class="icon-wrap">&#x23F3;</div>
+        <div><div class="s-label">Outstanding Balance</div><div class="s-value" id="total-outstanding">&#x20B1;0.00</div></div>
+      </div>
+    </div>
+
+    <!-- Unpaid Orders (customer only) -->
+    <div class="card-box" id="unpaid-orders-card" style="display:none;">
+      <div class="section-title">
+        &#x1F4CB; Unpaid Orders
+        <span class="badge-count" id="unpaid-count">0</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order #</th><th>Event Date</th><th>Event Address</th><th>Pax</th><th>Total</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="orders-for-payment"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Payment Records -->
+    <div class="card-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div class="section-title" style="margin-bottom:0">
+          &#x1F4C4; Payment Records
+          <span class="badge-count" id="payment-count">0</span>
+        </div>
+        <div id="payment-archive-tabs" style="display:none;gap:6px;display:flex">
+          <button id="ptab-btn-active" class="action-btn tab-btn-selected" onclick="showPaymentTab('active')" style="font-size:13px">📋 Active</button>
+          <button id="ptab-btn-archived" class="action-btn" onclick="showPaymentTab('archived')" style="font-size:13px;background:#fff3e0;color:#e65100">🗄️ Archives</button>
+        </div>
+      </div>
+
+      <!-- ACTIVE PAYMENTS -->
+      <div id="ptab-active">
+        <div class="filter-bar" style="margin-bottom:10px">
+          <button class="filter-btn active" onclick="filterPayments('all',this)">All</button>
+          <button class="filter-btn" onclick="filterPayments('Pending',this)">Pending</button>
+          <button class="filter-btn" onclick="filterPayments('Verified',this)">Verified</button>
+          <button class="filter-btn" onclick="filterPayments('Rejected',this)">Rejected</button>
+          <input class="filter-input" type="text" id="search-input" placeholder="Search..." oninput="applySearch()">
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Order #</th><th>Customer</th><th>Date</th><th>Amount</th><th>Balance</th><th>Method</th><th>Reference</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="payment-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ARCHIVED PAYMENTS (admin/staff only) -->
+      <div id="ptab-archived" style="display:none">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>ID</th><th>Order #</th><th>Customer</th><th>Date</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="archived-payments-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Admin Edit Bottom Sheet -->
+<div id="edit-overlay" class="overlay" style="display:none;" onclick="closeEditSheet(event)">
+  <div class="sheet" onclick="event.stopPropagation()">
+    <div class="sheet-title">&#x270F;&#xFE0F; Update Payment <span id="edit-pay-label" style="color:var(--text-muted);font-size:13px;font-weight:500;"></span></div>
+    <input type="hidden" id="edit-pay-id">
+    <div class="drawer-grid">
+      <div><label class="form-label">Payment Date</label><input type="date" id="edit-paydate" class="form-control"></div>
+      <div><label class="form-label">Amount Paid (&#x20B1;)</label><input type="number" id="edit-amount" class="form-control"></div>
+      <div><label class="form-label">Payment Method</label>
+        <select id="edit-method" class="form-select">
+          <option value="">Select Method</option>
+          <option>Cash</option><option>GCash</option><option>Maya</option><option>Bank Transfer</option><option>Credit Card</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:12px"><label class="form-label">Reference No. <span style="text-transform:none;font-weight:400;color:var(--text-muted)">(optional)</span></label>
+      <input type="text" id="edit-refno" class="form-control" placeholder="e.g. GCash reference number">
+    </div>
+    <div class="drawer-footer">
+      <button class="drawer-save" onclick="submitEditPayment()">&#x1F4BE; Save Changes</button>
+      <button class="drawer-cancel-btn" onclick="closeEditSheet()">&#x2716; Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-pay"></div>
+
+<script>
+const API      = 'http://127.0.0.1:5000';
+const role     = localStorage.getItem('role');
+const username = localStorage.getItem('username') || '';
+const custId   = localStorage.getItem('customer_id');
+if (!role || !username) window.location.href = 'login.html';
+
+const ICONS = {
+  sun: '<svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"></path></svg>',
+  moon: '<svg class="ui-icon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg>',
+  tray: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 15h18"></path><path d="M5 15a7 7 0 0 1 14 0"></path><path d="M8 10V8a4 4 0 0 1 8 0v2"></path></svg>',
+  home: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>',
+  user: '<svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>',
+  menu: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M4.5 7.5h15"></path><path d="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5Z"></path><path d="M7.5 12h9"></path><path d="M7.5 16.5h6"></path></svg>',
+  clipboard: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="4" rx="1.5"></rect><path d="M8 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"></path></svg>',
+  card: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"></rect><path d="M2.5 10h19"></path><path d="M6.5 15h4"></path><path d="M17 15h.01"></path></svg>',
+  logout: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>'
+};
+function icon(name) { return ICONS[name] || ''; }
+function applyStaticIcons() {
+  document.getElementById('logo-icon-slot').innerHTML = icon('tray');
+  document.querySelectorAll('.nav-icon-slot').forEach(node => {
+    node.innerHTML = icon(node.dataset.icon);
+  });
+}
+applyStaticIcons();
+
+document.getElementById('topbar-user').textContent   = username;
+document.getElementById('topbar-avatar').textContent = username.charAt(0).toUpperCase();
+const roleEl = document.getElementById('topbar-role');
+roleEl.textContent = role;
+const rStyles = { admin:'background:#fff3e0;color:#e07b00;', staff:'background:#e3f2fd;color:#1565c0;', customer:'background:#e8f5ee;color:#1b7a4b;' };
+roleEl.style.cssText += rStyles[role] || '';
+if (role === 'customer') {
+  document.getElementById('total-label').textContent = 'My Total Payments';
+  const nc = document.getElementById('nav-customers');
+  if (nc) { nc.innerHTML = `<span class="nav-icon-slot" data-icon="user">${icon('user')}</span><span>My Profile</span>`; nc.href = 'customers.html'; }
+}
+
+if (role === 'admin' || role === 'staff') {
+  const tabsEl = document.getElementById('payment-archive-tabs');
+  if (tabsEl) tabsEl.style.display = 'flex';
+}
+
+function scopedUrl(path) {
+  const p = new URLSearchParams(); p.set('role', role);
+  if (role === 'customer') p.set('customer_id', custId || '');
+  return API + path + '?' + p;
+}
+
+let ordersData=[], paymentsData=[], paymentCache=[], activeFilter='all', activeDrawerId=null;
+
+function formatDate(d) {
+  if (!d) return '\u2014';
+  try { return new Date(d).toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'}); }
+  catch { return d; }
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function formatMoney(value) {
+  return '\u20B1' + Number(value || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function receiptLineTotal(item, pax) {
+  if (typeof item.line_total !== 'undefined') return Number(item.line_total || 0);
+  const price = Number(item.PricePerPax || 0);
+  if ((item.pricing_type || 'per_pax') === 'flat_rate') return price * Number(item.Quantity || 0);
+  return price * Number(pax || 0) * Number(item.Quantity || 0);
+}
+
+function receiptBreakdown(item, pax) {
+  if (item.line_breakdown) return item.line_breakdown;
+  const total = receiptLineTotal(item, pax);
+  if ((item.pricing_type || 'per_pax') === 'flat_rate') {
+    return `${formatMoney(item.PricePerPax)} × qty ${item.Quantity} = ${formatMoney(total)} (flat rate)`;
+  }
+  return `${formatMoney(item.PricePerPax)} × ${pax} pax × qty ${item.Quantity} = ${formatMoney(total)}`;
+}
+
+function getOrderById(orderId) {
+  return ordersData.find(o => String(o.OrderID) === String(orderId)) || null;
+}
+
+function getOrderPaymentSummary(orderId, excludedPaymentId=null) {
+  const order = getOrderById(orderId);
+  const total = parseFloat(order?.TotalAmount || 0);
+  const paid = paymentCache
+    .filter(p => String(p.OrderID) === String(orderId) && p.VerificationStatus !== 'Rejected' && String(p.PaymentID) !== String(excludedPaymentId || ''))
+    .reduce((sum, p) => sum + parseFloat(p.AmountPaid || 0), 0);
+  const remaining = Math.max(0, total - paid);
+  return { order, total, paid, remaining };
+}
+
+async function loadPayments() {
+  const res = await fetch(scopedUrl('/payments'));
+  const data = await res.json();
+  paymentsData = data; paymentCache = data;
+  let total=0, verified=0;
+  data.forEach(p=>{ total+=parseFloat(p.AmountPaid); if(p.VerificationStatus==='Verified') verified+=parseFloat(p.AmountPaid); });
+  document.getElementById('total-collected').textContent = formatMoney(total);
+  document.getElementById('total-verified').textContent  = formatMoney(verified);
+  renderPayments(data); updateOutstanding();
+}
+
+function updateOutstanding() {
+  let out=0;
+  ordersData.forEach(o=>{
+    if (['Pending','Confirmed'].includes(o.Status)) {
+      out += getOrderPaymentSummary(o.OrderID).remaining;
+    }
+  });
+  document.getElementById('total-outstanding').textContent = formatMoney(out);
+}
+
+function renderPayments(data) {
+  const tbody=document.getElementById('payment-table');
+  document.getElementById('payment-count').textContent=data.length;
+  tbody.innerHTML='';
+  if (!data.length) {
+    tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="ei">\uD83D\uDCED</div><p>No payment records found</p></div></td></tr>';
+    return;
+  }
+  data.forEach(p=>{
+    const summary = getOrderPaymentSummary(p.OrderID);
+    const customerName = escapeHtml(p.CustomerName || summary.order?.CustomerName || username || '\u2014');
+    const balance = summary.remaining;
+    const balPill=balance>0
+      ?'<button class="action-btn balance-badge due" onclick="openBalanceDrawer('+p.OrderID+',\'payment-row-'+p.PaymentID+'\')">'+formatMoney(balance)+' due</button>'
+      :'<span class="balance-badge paid">Fully paid</span>';
+    const vs=p.VerificationStatus||'Pending';
+    const sMap={Verified:'pill-green',Rejected:'pill-red',Pending:'pill-orange'};
+    const mMap={Cash:'pill-green',GCash:'pill-blue',Maya:'pill-blue','Bank Transfer':'pill-gray','Credit Card':'pill-gray'};
+    let actions='';
+    // Admin: verify, reject, edit, delete
+    if (role==='admin') {
+      if (vs!=='Verified') actions+='<button class="action-btn btn-verify" onclick="verifyPayment('+p.PaymentID+',\'verify\')">\u2705 Verify</button>';
+      if (vs==='Pending')  actions+='<button class="action-btn btn-reject" onclick="verifyPayment('+p.PaymentID+',\'reject\')">\u274C Reject</button>';
+      actions+='<button class="action-btn btn-edit-p" onclick="openEditSheet('+p.PaymentID+')">\u270F\uFE0F Edit</button>';
+      actions+='<button class="action-btn btn-delete" onclick="deletePayment('+p.PaymentID+')">🗄️ Archive</button>';
+    }
+    // Staff: verify and reject only
+    if (role==='staff') {
+      if (vs!=='Verified') actions+='<button class="action-btn btn-verify" onclick="verifyPayment('+p.PaymentID+',\'verify\')">\u2705 Verify</button>';
+      if (vs==='Pending')  actions+='<button class="action-btn btn-reject" onclick="verifyPayment('+p.PaymentID+',\'reject\')">\u274C Reject</button>';
+    }
+    // Receipt: all roles when verified
+    if (vs==='Verified') actions+='<button class="action-btn btn-receipt" onclick="printReceipt('+p.PaymentID+')">\uD83E\uDDFE Receipt</button>';
+    if (vs==='Verified') actions+='<button class="action-btn btn-pdf" onclick="downloadReceiptPDF('+p.PaymentID+')">\u2B07\uFE0F PDF</button>';
+
+    tbody.innerHTML+='<tr id="payment-row-'+p.PaymentID+'" data-status="'+vs+'" data-order="'+p.OrderID+'">'
+      +'<td><strong>#'+p.PaymentID+'</strong></td>'
+      +'<td>Order #'+p.OrderID+'</td>'
+      +'<td>'+customerName+'</td>'
+      +'<td>'+formatDate(p.PaymentDate)+'</td>'
+      +'<td><strong>'+formatMoney(p.AmountPaid)+'</strong></td>'
+      +'<td>'+balPill+'</td>'
+      +'<td><span class="pill '+(mMap[p.Method]||'pill-gray')+'">'+(p.Method||'\u2014')+'</span></td>'
+      +'<td style="color:var(--text-muted);font-size:12px;">'+escapeHtml(p.ReferenceNo||'\u2014')+'</td>'
+      +'<td><span class="pill '+(sMap[vs]||'pill-gray')+'">'+vs+'</span></td>'
+      +'<td style="white-space:nowrap">'+actions+'</td>'
+      +'</tr>';
+  });
+}
+
+function filterPayments(status,btn) {
+  activeFilter=status;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  applySearch();
+}
+function applySearch() {
+  const q=(document.getElementById('search-input').value||'').toLowerCase();
+  let f=paymentsData;
+  if(activeFilter!=='all') f=f.filter(p=>p.VerificationStatus===activeFilter);
+  if(q) f=f.filter(p=>
+    String(p.OrderID).includes(q) ||
+    (p.CustomerName||'').toLowerCase().includes(q) ||
+    (p.Method||'').toLowerCase().includes(q) ||
+    (p.ReferenceNo||'').toLowerCase().includes(q)
+  );
+  renderPayments(f);
+}
+
+async function loadOrderOptions() {
+  try {
+    const url=role==='customer'?API+'/orders?customer_id='+custId+'&role=customer':API+'/orders?role='+role;
+    const res=await fetch(url); ordersData=await res.json();
+    renderPayments(paymentsData);
+    if(role==='customer') {
+      const unpaid=ordersData.filter(o=>['Pending','Confirmed'].includes(o.Status)&&getOrderPaymentSummary(o.OrderID).remaining>0);
+      renderOrdersForPayment(unpaid);
+    }
+    updateOutstanding();
+  } catch(e) { console.error(e); }
+}
+
+function renderOrdersForPayment(orders) {
+  const tbody=document.getElementById('orders-for-payment');
+  const card=document.getElementById('unpaid-orders-card');
+  document.getElementById('unpaid-count').textContent=orders.length;
+  if(!tbody||!card) return;
+  if(!orders.length){card.style.display='none';return;}
+  card.style.display='block'; tbody.innerHTML='';
+  orders.forEach(o=>{
+    const summary = getOrderPaymentSummary(o.OrderID);
+    const total = parseFloat(o.TotalAmount||0);
+    const remaining = summary.remaining;
+    const days=Math.ceil((new Date(o.EventDate)-new Date())/86400000);
+    const urgency=(days<=3&&days>=0)?'<div style="font-size:11px;color:#c62828;font-weight:700;margin-top:2px;">\u26A0\uFE0F '+days+'d left</div>':'';
+    const sMap={Confirmed:'pill-green',Pending:'pill-orange'};
+    const tr=document.createElement('tr');
+    tr.id='order-pay-row-'+o.OrderID;
+    tr.innerHTML='<td><strong>Order #'+o.OrderID+'</strong></td>'
+      +'<td>'+formatDate(o.EventDate)+urgency+'</td>'
+      +'<td>'+(o.EventAddress||'\u2014')+'</td>'
+      +'<td>'+o.Pax+'</td>'
+      +'<td><strong>'+formatMoney(total)+'</strong><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Balance: '+formatMoney(remaining)+'</div></td>'
+      +'<td><span class="pill '+(sMap[o.Status]||'pill-gray')+'">'+o.Status+'</span></td>'
+      +'<td><button class="action-btn btn-pay" onclick="openPayDrawer('+o.OrderID+',\'order-pay-row-'+o.OrderID+'\')">\uD83D\uDCB3 Pay Now</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+// Inline drawer below the row
+function clearDrawer() { document.querySelectorAll('.drawer-row').forEach(r=>r.remove()); activeDrawerId=null; }
+
+function onMethodChange(orderId) {
+  const m=document.getElementById('npay-method-'+orderId).value;
+  const n=document.getElementById('npay-cash-note-'+orderId);
+  if(n) n.style.display=m==='Cash'?'block':'none';
+}
+
+function openBalanceDrawer(orderId, anchorId) {
+  openPayDrawer(orderId, anchorId);
+}
+
+function openPayDrawer(orderId, anchorId) {
+  const summary = getOrderPaymentSummary(orderId);
+  if (!summary.order || summary.remaining <= 0) {
+    showToast('This order is already fully paid.', '#c62828');
+    return;
+  }
+  clearDrawer();
+  if(activeDrawerId==='pay-'+orderId){activeDrawerId=null;return;}
+  activeDrawerId='pay-'+orderId;
+  const today=new Date().toISOString().split('T')[0];
+  const order = summary.order;
+  const colSpan = String(anchorId || '').startsWith('payment-row-') ? 10 : 7;
+  const html='<tr class="drawer-row" id="drawer-pay-order-'+orderId+'"><td colspan="'+colSpan+'">'
+    +'<div class="drawer-inner">'
+    +'<div class="drawer-header">'
+    +'<span style="font-size:20px">\uD83D\uDCB3</span>'
+    +'<span class="drawer-title">Make Payment \u2014 Order #'+orderId+'</span>'
+    +'<span class="drawer-badge">'+formatMoney(summary.remaining)+' due</span>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px;">'
+    +'<div><label class="form-label">Customer</label><div class="form-control" style="pointer-events:none;background:var(--gray-bg);">'+escapeHtml(order.CustomerName||username)+'</div></div>'
+    +'<div><label class="form-label">Order Total</label><div class="form-control" style="pointer-events:none;background:var(--gray-bg);">'+formatMoney(summary.total)+'</div></div>'
+    +'<div><label class="form-label">Paid So Far</label><div class="form-control" style="pointer-events:none;background:var(--gray-bg);">'+formatMoney(summary.paid)+'</div></div>'
+    +'</div>'
+    +'<div class="drawer-grid">'
+    +'<div><label class="form-label">Payment Date</label><input type="date" id="npay-date-'+orderId+'" value="'+today+'" class="form-control"></div>'
+    +'<div><label class="form-label">Amount Paid (\u20B1)</label><input type="number" id="npay-amount-'+orderId+'" value="'+summary.remaining.toFixed(2)+'" min="0.01" max="'+summary.remaining.toFixed(2)+'" step="0.01" class="form-control"></div>'
+    +'<div><label class="form-label">Payment Method</label>'
+    +'<select id="npay-method-'+orderId+'" class="form-select" onchange="onMethodChange('+orderId+')">'
+    +'<option value="">Select Method</option>'
+    +'<option>Cash</option><option>GCash</option><option>Maya</option><option>Bank Transfer</option><option>Credit Card</option>'
+    +'</select>'
+    +'<div id="npay-cash-note-'+orderId+'" class="auto-note">\u2705 Cash is auto-verified upon submission</div>'
+    +'</div>'
+    +'</div>'
+    +'<div><label class="form-label">Reference No. <span style="text-transform:none;font-weight:400;color:var(--text-muted)">(optional, for non-cash)</span></label>'
+    +'<input type="text" id="npay-ref-'+orderId+'" placeholder="e.g. GCash reference number" class="form-control"></div>'
+    +'<div class="drawer-footer">'
+    +'<button class="drawer-save" onclick="submitNewPayment('+orderId+')">\uD83D\uDCBE Submit Payment</button>'
+    +'<button class="drawer-cancel-btn" onclick="clearDrawer()">\u2716 Cancel</button>'
+    +'</div>'
+    +'</div></td></tr>';
+  const row=document.getElementById(anchorId || ('order-pay-row-'+orderId)) || document.getElementById('order-pay-row-'+orderId);
+  if(row) row.insertAdjacentHTML('afterend',html);
+}
+
+async function submitNewPayment(orderId) {
+  const summary = getOrderPaymentSummary(orderId);
+  const saveButton = document.querySelector(`#drawer-pay-order-${orderId} .drawer-save`);
+  const date=document.getElementById('npay-date-'+orderId).value;
+  const amount=parseFloat(document.getElementById('npay-amount-'+orderId).value);
+  const method=document.getElementById('npay-method-'+orderId).value;
+  const ref=document.getElementById('npay-ref-'+orderId).value;
+  if(!date||!amount||!method){window.AppUI?.shakeInvalid(['npay-date-'+orderId,'npay-amount-'+orderId,'npay-method-'+orderId]);alert('Please fill in all required fields.');return;}
+  if(amount<=0){window.AppUI?.shakeInvalid(['npay-amount-'+orderId]);alert('Amount paid must be greater than zero.');return;}
+  if(amount>summary.remaining){window.AppUI?.shakeInvalid(['npay-amount-'+orderId]);alert('Amount paid cannot be higher than the remaining balance.');return;}
+  const isCash=method==='Cash';
+  const body={OrderID:orderId,PaymentDate:date,AmountPaid:amount,Method:method,ReferenceNo:ref};
+  if(isCash) body.auto_verify=true;
+  window.AppUI?.setButtonLoading(saveButton, true, 'Submitting');
+  const res=await fetch(API+'/payments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const result=await res.json();
+  if(!res.ok){window.AppUI?.setButtonLoading(saveButton, false);alert(result.message||'Error submitting payment');return;}
+  showToast(isCash?'\u2705 Payment submitted & auto-verified!':'\u2705 Payment submitted! Awaiting admin verification.');
+  clearDrawer(); await loadPayments(); await loadOrderOptions();
+}
+
+// Verify / Reject (admin + staff)
+async function verifyPayment(id,action) {
+  if(!confirm((action==='verify'?'Verify':'Reject')+' this payment?')) return;
+  try {
+    const res=await fetch(API+'/payments/'+id+'/verify',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,verifier_id:localStorage.getItem('user_id')})});
+    const data=await res.json();
+    if(!res.ok){alert(data.message||'Error');return;}
+    showToast(action==='verify'?'\u2705 Payment verified!':'\u274C Payment rejected.');
+    loadPayments();
+  } catch {showToast('\uD83D\uDD0C Cannot connect to server.','#c62828');}
+}
+
+// Admin edit via bottom sheet
+function openEditSheet(id) {
+  const payment = paymentsData.find(p => String(p.PaymentID) === String(id));
+  if (!payment) return;
+  document.getElementById('edit-pay-id').value=id;
+  document.getElementById('edit-pay-label').textContent='\u2014 Payment #'+id;
+  document.getElementById('edit-paydate').value=payment.PaymentDate;
+  document.getElementById('edit-amount').value=payment.AmountPaid;
+  document.getElementById('edit-method').value=payment.Method;
+  document.getElementById('edit-refno').value=payment.ReferenceNo || '';
+  document.getElementById('edit-overlay').style.display='flex';
+}
+function closeEditSheet(e) {
+  if(!e||e.target===document.getElementById('edit-overlay'))
+    document.getElementById('edit-overlay').style.display='none';
+}
+async function submitEditPayment() {
+  const saveButton = document.querySelector('#edit-overlay .drawer-save');
+  const id=document.getElementById('edit-pay-id').value;
+  const date=document.getElementById('edit-paydate').value;
+  const amount=document.getElementById('edit-amount').value;
+  const method=document.getElementById('edit-method').value;
+  const refno=document.getElementById('edit-refno').value;
+  if(!date||!amount||!method){window.AppUI?.shakeInvalid(['edit-paydate','edit-amount','edit-method']);alert('Please fill in all required fields.');return;}
+  try {
+    window.AppUI?.setButtonLoading(saveButton, true, 'Saving');
+    const res=await fetch(API+'/payments/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({PaymentDate:date,AmountPaid:amount,Method:method,ReferenceNo:refno,_role:role})});
+    const result=await res.json();
+    if(!res.ok){window.AppUI?.setButtonLoading(saveButton, false);alert(result.message||'Error');return;}
+    window.AppUI?.setButtonLoading(saveButton, false); showToast('\u2705 Payment updated!'); closeEditSheet(); loadPayments();
+  } catch {window.AppUI?.setButtonLoading(saveButton, false);showToast('\uD83D\uDD0C Cannot connect to server.','#c62828');}
+}
+
+// Admin archive (soft delete)
+async function deletePayment(id) {
+  if (!confirm('Archive this payment record? It will be saved in Archives and can be restored by an admin.')) return;
+  const row = document.getElementById('payment-row-' + id);
+  const res = await fetch(API + '/payments/' + id, { method: 'DELETE' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.message || 'Could not archive payment.', '#c62828'); return; }
+  await window.AppUI?.animateRemoval(row, 'app-removing-row');
+  showToast('🗄️ Payment archived.', '#e65100');
+  loadPayments();
+}
+
+async function loadArchivedPayments() {
+  const tbody = document.getElementById('archived-payments-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px">Loading...</td></tr>';
+  try {
+    const res = await fetch(API + '/payments/archived?role=' + role);
+    const data = await res.json().catch(() => []);
+    if (!Array.isArray(data) || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px">No archived payments.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td><strong>#${p.PaymentID}</strong></td>
+        <td>Order #${p.OrderID}</td>
+        <td>${p.CustomerName || ''}</td>
+        <td>${p.PaymentDate || ''}</td>
+        <td>₱${parseFloat(p.AmountPaid || 0).toFixed(2)}</td>
+        <td>${p.Method || ''}</td>
+        <td>${p.ReferenceNo || '-'}</td>
+        <td><span style="background:#eee;color:#666;border-radius:20px;padding:3px 10px;font-size:12px">${p.VerificationStatus || ''}</span></td>
+        <td>
+          <small style="color:#aaa;display:block;margin-bottom:4px">${p.ArchivedAt ? 'Archived: ' + p.ArchivedAt.slice(0,10) : ''}</small>
+          ${role === 'admin' ? `<button class="action-btn" style="background:#e8f5e9;color:#2e7d32" onclick="restorePayment(${p.PaymentID})">↩ Restore</button>` : ''}
+        </td>
+      </tr>`).join('');
+  } catch (e) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#c62828;padding:24px">Failed to load archived payments.</td></tr>';
+  }
+}
+
+async function restorePayment(id) {
+  if (!confirm('Restore this payment back to the active list?')) return;
+  const res = await fetch(API + '/payments/' + id + '/restore', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ _role: role })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) { showToast(data.message || 'Could not restore.', '#c62828'); return; }
+  showToast('Payment restored successfully.', '#2e7d32');
+  loadArchivedPayments();
+  loadPayments();
+}
+
+function showPaymentTab(tab) {
+  document.getElementById('ptab-active').style.display = tab === 'active' ? '' : 'none';
+  document.getElementById('ptab-archived').style.display = tab === 'archived' ? '' : 'none';
+  document.getElementById('ptab-btn-active').classList.toggle('tab-btn-selected', tab === 'active');
+  document.getElementById('ptab-btn-archived').classList.toggle('tab-btn-selected', tab === 'archived');
+  if (tab === 'archived') loadArchivedPayments();
+}
+
+// Receipt (all roles, verified only)
+async function printReceipt(paymentId) {
+  const p=paymentsData.find(x=>x.PaymentID===paymentId); if(!p) return;
+  const order=ordersData.find(o=>o.OrderID===p.OrderID)||{};
+  const customerName = p.CustomerName || order.CustomerName || username;
+  let items = [];
+  try {
+    const res = await fetch(`${API}/orders/${p.OrderID}/items?role=${role}&customer_id=${custId||''}`);
+    items = await res.json();
+  } catch (e) {}
+  const pax = order.Pax || 0;
+  const refRow=p.ReferenceNo?'<div class="row"><span>Reference No.<\/span><span>'+p.ReferenceNo+'<\/span><\/div>':'';
+  const itemRows = Array.isArray(items) && items.length
+    ? `<div class="section-title">Ordered Dishes<\/div>${items.map(item=>'<div class="item-row"><div class="item-head"><strong>'+escapeHtml(item.ItemName)+'<\/strong><span>'+formatMoney(receiptLineTotal(item,pax))+'<\/span><\/div><div class="item-sub">'+escapeHtml(receiptBreakdown(item,pax))+'<\/div><\/div>').join('')}`
+    : '';
+  const html=[
+    '<!DOCTYPE html>',
+    '<html><head><title>Receipt #'+p.PaymentID+'<\/title>',
+    '<style>',
+    'body{font-family:"Segoe UI",sans-serif;padding:40px;max-width:560px;margin:0 auto;color:#1a1a1a;}',
+    'h2{font-size:20px;margin-bottom:4px;}',
+    '.sub{color:#777;font-size:13px;margin-bottom:24px;}',
+    '.row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #eee;font-size:14px;gap:16px;}',
+    '.total{font-size:18px;font-weight:700;color:#e07b00;}',
+    '.badge{display:inline-block;background:#e8f5ee;color:#1b7a4b;padding:3px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-top:12px;}',
+    '.section-title{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#999;margin:24px 0 10px;}',
+    '.item-row{padding:10px 0;border-bottom:1px solid #f0f0f0;}',
+    '.item-head{display:flex;justify-content:space-between;gap:16px;font-size:14px;}',
+    '.item-sub{font-size:11px;color:#777;margin-top:4px;}',
+    '.footer{text-align:center;margin-top:30px;font-size:12px;color:#aaa;}',
+    '<\/style><\/head><body>',
+    '<h2>\uD83E\uDDFE Payment Receipt<\/h2>',
+    '<div class="sub">Catering Billing \xB7 '+new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})+'<\/div>',
+    '<div class="row"><span>Receipt #<\/span><strong>'+p.PaymentID+'<\/strong><\/div>',
+    '<div class="row"><span>Order #<\/span><strong>'+p.OrderID+'<\/strong><\/div>',
+    '<div class="row"><span>Customer<\/span><span>'+escapeHtml(customerName)+'<\/span><\/div>',
+    '<div class="row"><span>Event Date<\/span><span>'+formatDate(order.EventDate)+'<\/span><\/div>',
+    '<div class="row"><span>Event Address<\/span><span>'+escapeHtml(order.EventAddress||'\u2014')+'<\/span><\/div>',
+    '<div class="row"><span>Payment Date<\/span><span>'+formatDate(p.PaymentDate)+'<\/span><\/div>',
+    '<div class="row"><span>Method<\/span><span>'+escapeHtml(p.Method||'\u2014')+'<\/span><\/div>',
+    refRow,
+    itemRows,
+    '<div class="row"><span>Amount Paid<\/span><span class="total">'+formatMoney(p.AmountPaid)+'<\/span><\/div>',
+    '<div><span class="badge">\u2705 '+p.VerificationStatus+'<\/span><\/div>',
+    '<div class="footer">Thank you for your payment! \xB7 Catering Billing<\/div>',
+    '<\/body><\/html>'
+  ].join('\n');
+  const w=window.open('','_blank','width=640,height=760');
+  w.document.write(html); w.document.close(); w.print();
+}
+
+async function downloadReceiptPDF(paymentId) {
+  const p=paymentsData.find(x=>x.PaymentID===paymentId); if(!p) return;
+  const order=ordersData.find(o=>o.OrderID===p.OrderID)||{};
+  const customerName = p.CustomerName || order.CustomerName || username;
+  let items = [];
+  try {
+    const res = await fetch(`${API}/orders/${p.OrderID}/items?role=${role}&customer_id=${custId||''}`);
+    items = await res.json();
+  } catch (e) {}
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit:'pt', format:'a4' });
+  const pageW = doc.internal.pageSize.getWidth();
+  const orange = [224,123,0];
+  const green  = [27,122,75];
+  const gray   = [119,119,119];
+  const dark   = [26,26,26];
+
+  // Header band
+  doc.setFillColor(...orange);
+  doc.rect(0, 0, pageW, 56, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text('\uD83E\uDDFE  Payment Receipt', pageW/2, 26, {align:'center'});
+  doc.setFontSize(9);
+  doc.setFont('helvetica','normal');
+  doc.text('Catering Billing  \u00B7  '+new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}), pageW/2, 44, {align:'center'});
+
+  // Divider
+  let y = 72;
+  const drawRow = (label, value, bold=false) => {
+    doc.setDrawColor(235,235,235);
+    doc.line(28, y+14, pageW-28, y+14);
+    doc.setTextColor(...gray);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(9);
+    doc.text(label, 32, y+4);
+    doc.setTextColor(...dark);
+    doc.setFont('helvetica', bold?'bold':'normal');
+    doc.setFontSize(bold?12:10);
+    doc.text(String(value), pageW-32, y+4, {align:'right'});
+    y += 22;
+  };
+
+  drawRow('Receipt #', '#'+p.PaymentID);
+  drawRow('Order #', '#'+p.OrderID);
+  drawRow('Customer', customerName);
+  drawRow('Event Date', formatDate(order.EventDate));
+  drawRow('Event Address', order.EventAddress||'\u2014');
+  drawRow('Payment Date', formatDate(p.PaymentDate));
+  drawRow('Method', p.Method||'\u2014');
+  if(p.ReferenceNo) drawRow('Reference No.', p.ReferenceNo);
+  if (Array.isArray(items) && items.length) {
+    y += 12;
+    doc.setTextColor(...gray);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(10);
+    doc.text('ORDERED DISHES', 32, y);
+    y += 14;
+    const pax = order.Pax || 0;
+    items.forEach(item => {
+      doc.setDrawColor(240,240,240);
+      doc.line(32, y + 26, pageW - 32, y + 26);
+      doc.setTextColor(...dark);
+      doc.setFont('helvetica','bold');
+      doc.setFontSize(10);
+      doc.text(String(item.ItemName || 'Dish'), 32, y);
+      doc.text(formatMoney(receiptLineTotal(item, pax)), pageW - 32, y, { align:'right' });
+      y += 12;
+      doc.setTextColor(...gray);
+      doc.setFont('helvetica','normal');
+      doc.setFontSize(8);
+      const breakdownLines = doc.splitTextToSize(receiptBreakdown(item, pax), pageW - 64);
+      doc.text(breakdownLines, 32, y);
+      y += (breakdownLines.length * 10) + 10;
+    });
+  }
+  y += 4;
+  drawRow('Amount Paid', formatMoney(p.AmountPaid), true);
+
+  // Status badge
+  y += 10;
+  doc.setFillColor(232,245,238);
+  doc.roundedRect(32, y, 90, 20, 10, 10, 'F');
+  doc.setTextColor(...green);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.text('\u2705 '+p.VerificationStatus, 77, y+13, {align:'center'});
+
+  // Footer
+  y += 40;
+  doc.setDrawColor(...orange);
+  doc.setLineWidth(0.5);
+  doc.line(28, y, pageW-28, y);
+  y += 14;
+  doc.setTextColor(...gray);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(8);
+  doc.text('Thank you for your payment!  \u00B7  Catering Billing', pageW/2, y, {align:'center'});
+
+  doc.save('Receipt_'+p.PaymentID+'.pdf');
+  showToast('\u2B07\uFE0F Receipt PDF downloaded!');
+}
+
+function showToast(msg,color='#1b7a4b') {
+  const t=document.getElementById('toast-pay');
+  t.textContent=msg; t.style.background=color; t.style.display='block'; t.classList.add('show');
+  setTimeout(()=>{t.classList.remove('show');t.style.display='none';},3000);
+}
+function logout(){if(confirm('Logout?')){localStorage.clear();window.location.href='login.html';}}
+function toggleDark(){
+  document.body.classList.toggle('dark');
+  document.getElementById('dark-icon').innerHTML=document.body.classList.contains('dark') ? icon('sun') : icon('moon');
+  localStorage.setItem('darkMode',document.body.classList.contains('dark'));
+}
+window.onload=async()=>{
+  document.getElementById('dark-icon').innerHTML = icon('moon');
+  if(localStorage.getItem('darkMode')==='true'){document.body.classList.add('dark');document.getElementById('dark-icon').innerHTML=icon('sun');}
+  await loadPayments();
+  await loadOrderOptions();
+};
+</script>
+<script src="settings.js"></script>
+</body>
+</html>

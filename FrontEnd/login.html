@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login — Catering Billing System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #F5A820;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.13) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body.dark { background-color: #181a1b; }
+    body.dark::before { background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px); }
+
+    .wrapper {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      width: 920px;
+      min-height: 530px;
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 32px 90px rgba(0,0,0,0.25);
+    }
+
+    /* ─── LEFT PANEL ─── */
+    .left {
+      flex: 1.2;
+      position: relative;
+      overflow: hidden;
+      background: #111;
+    }
+    .left-bg {
+      position: absolute;
+      inset: 0;
+      background: url('https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=900&auto=format&fit=crop&q=80') center/cover no-repeat;
+      filter: brightness(0.55) saturate(1.1);
+    }
+    /* organic wave edge */
+    .left::after {
+      content: '';
+      position: absolute;
+      top: 0; right: -2px;
+      width: 90px; height: 100%;
+      background: #fff;
+      clip-path: ellipse(90px 52% at 100% 50%);
+      z-index: 4;
+    }
+    body.dark .left::after { background: #202124; }
+
+    .left-content {
+      position: relative;
+      z-index: 3;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 36px 32px;
+    }
+
+    /* circular food photos stacked like reference */
+    .food-stack {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      padding-right: 40px;
+    }
+    .food-circle {
+      width: 210px; height: 210px;
+      border-radius: 50%;
+      object-fit: cover;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.5);
+      border: 4px solid rgba(255,255,255,0.18);
+      display: block;
+    }
+    .food-circle.small {
+      width: 160px; height: 160px;
+      align-self: flex-start;
+      margin-left: 24px;
+    }
+
+    /* lightning bolts */
+    .bolt {
+      position: absolute;
+      font-size: 28px;
+      color: #F5A820;
+      animation: zbolt 3.5s ease-in-out infinite;
+      z-index: 3;
+    }
+    .bolt-1 { top: 48px;   right: 110px; animation-delay: 0s; }
+    .bolt-2 { top: 34px;   left:  30px;  animation-delay: 1s;   font-size: 18px; }
+    .bolt-3 { bottom: 80px; right: 70px; animation-delay: 2s;   font-size: 22px; }
+    .bolt-4 { bottom: 48px; left:  38px; animation-delay: 0.5s; font-size: 16px; }
+    @keyframes zbolt {
+      0%, 100% { transform: rotate(-18deg) translateY(0); }
+      50%       { transform: rotate(18deg) translateY(-7px); }
+    }
+
+    .left-bottom { color: #fff; padding-bottom: 4px; }
+    .left-bottom h2 { font-size: 27px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+    .left-bottom p  { font-size: 13px; opacity: 0.82; line-height: 1.55; max-width: 280px; }
+    .dots { display: flex; gap: 7px; margin-top: 14px; }
+    .dot  { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.4); }
+    .dot.active { background: #fff; width: 22px; border-radius: 4px; }
+
+    /* ─── RIGHT PANEL ─── */
+    .right {
+      width: 390px;
+      flex-shrink: 0;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 52px 44px;
+      position: relative;
+    }
+    body.dark .right { background: #202124; color: #e8eaed; }
+    .right::before {
+      content: '';
+      position: absolute;
+      top: -70px; right: -70px;
+      width: 220px; height: 220px;
+      background: radial-gradient(circle, rgba(245,168,32,0.14) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .right::after {
+      content: '';
+      position: absolute;
+      bottom: -50px; left: -50px;
+      width: 180px; height: 180px;
+      background: radial-gradient(circle, rgba(245,168,32,0.09) 0%, transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: #F5A820;
+      margin-bottom: 6px;
+    }
+    .form-title {
+      font-size: 28px;
+      font-weight: 800;
+      color: #1a1a1a;
+      line-height: 1.2;
+      margin-bottom: 30px;
+    }
+    body.dark .form-title { color: #e8eaed; }
+
+    /* messages */
+    .msg {
+      font-size: 12px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      margin-bottom: 14px;
+      display: none;
+      font-weight: 500;
+      text-align: center;
+    }
+    .msg.error   { background: #fdecea; color: #c62828; border: 1.5px solid #e53935; }
+    .msg.success { background: #e8f5e9; color: #2e7d32; border: 1.5px solid #43a047; }
+    body.dark .msg.error   { background: #3a1010; color: #ff6b6b; border-color: #ff4444; }
+    body.dark .msg.success { background: #0f2a0f; color: #69db7c; border-color: #40c057; }
+
+    /* pill inputs */
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 10.5px; font-weight: 600;
+      letter-spacing: 1.8px; text-transform: uppercase;
+      color: #aaa; margin-bottom: 6px;
+    }
+    body.dark .field label { color: #f0c040; }
+
+    .field input {
+      width: 100%;
+      height: 50px;
+      padding: 0 20px;
+      border: 1.8px solid #EBEBEB;
+      border-radius: 50px;
+      background: #F9F9F9;
+      font-size: 14px;
+      font-family: 'Poppins', sans-serif;
+      color: #1a1a1a;
+      outline: none;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .field input:focus { border-color: #F5A820; background: #fff; }
+    .field input::placeholder { color: #c8c8c8; }
+    body.dark .field input { background: #2b2d31; border-color: #3c4043; color: #e8eaed; }
+    body.dark .field input::placeholder { color: #9aa0a6; }
+    body.dark .field input:focus { border-color: #f0c040; background: #242628; }
+
+    .pw-wrap { position: relative; }
+    .pw-wrap input { padding-right: 50px; }
+    .pw-toggle {
+      position: absolute; right: 17px; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer; font-size: 16px; color: #ccc; padding: 0;
+    }
+    body.dark .pw-toggle { color: #80868b; }
+
+    .forgot-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: -8px; margin-bottom: 22px;
+    }
+    .forgot-row a {
+      font-size: 12px; color: #F5A820;
+      font-weight: 500; text-decoration: none;
+    }
+    .forgot-row a:hover { text-decoration: underline; }
+
+    /* green login button — matches reference */
+    .btn-login {
+      width: 100%; height: 52px;
+      background: #5CB85C;
+      color: #fff; border: none;
+      border-radius: 50px;
+      font-size: 15px; font-weight: 700;
+      letter-spacing: 0.5px;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+      box-shadow: 0 8px 24px rgba(92,184,92,0.38);
+      transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .btn-login:hover { background: #4cae4c; transform: translateY(-2px); box-shadow: 0 12px 30px rgba(92,184,92,0.45); }
+    .btn-login:active { transform: translateY(0); }
+
+    .register-link {
+      text-align: center; margin-top: 20px;
+      font-size: 13px; color: #aaa;
+    }
+    .register-link a { color: #F5A820; font-weight: 600; text-decoration: none; }
+    .register-link a:hover { text-decoration: underline; }
+    body.dark .register-link { color: #9aa0a6; }
+
+    .dark-toggle {
+      position: absolute; top: 14px; right: 14px;
+      background: rgba(255,255,255,0.18); border: none;
+      border-radius: 50%; width: 36px; height: 36px;
+      font-size: 16px; cursor: pointer; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+    }
+    body.dark .dark-toggle { background: rgba(255,255,255,0.08); }
+
+    /* entrance */
+    .right > * { animation: up 0.5s cubic-bezier(0.22,1,0.36,1) both; }
+    @keyframes up { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .eyebrow                  { animation-delay:.08s; }
+    .form-title               { animation-delay:.14s; }
+    .field:nth-of-type(1)     { animation-delay:.20s; }
+    .field:nth-of-type(2)     { animation-delay:.25s; }
+    .forgot-row               { animation-delay:.28s; }
+    .btn-login                { animation-delay:.32s; }
+    .or-row                   { animation-delay:.36s; }
+    .social-row               { animation-delay:.40s; }
+    .register-link            { animation-delay:.44s; }
+
+    @media (max-width: 680px) {
+      .left { display: none; }
+      .right { width: 100%; border-radius: 28px; }
+      .wrapper { width: 95%; border-radius: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrapper">
+  <button class="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
+    <span id="dark-icon">🌙</span>
+  </button>
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-bg"></div>
+    <span class="bolt bolt-1">⚡</span>
+    <span class="bolt bolt-2">⚡</span>
+    <span class="bolt bolt-3">⚡</span>
+    <span class="bolt bolt-4">⚡</span>
+
+    <div class="left-content">
+      <div class="food-stack">
+        <img class="food-circle"
+          src="https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500&auto=format&fit=crop&q=80"
+          alt="Fresh salad bowl">
+        <img class="food-circle small"
+          src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&auto=format&fit=crop&q=80"
+          alt="Healthy food">
+      </div>
+      <div class="left-bottom">
+        <h2>Need catering<br>for your event?</h2>
+        <p>Book our services for any special occasion — birthdays, weddings, and more.</p>
+        <div class="dots">
+          <div class="dot active"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <p class="eyebrow">Welcome back!</p>
+    <h2 class="form-title">CATERING<br>BILLING SYSTEM</h2>
+
+    <div id="error-msg"   class="msg error"></div>
+    <div id="success-msg" class="msg success"></div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="username" placeholder="Enter your username" autocomplete="username">
+    </div>
+
+    <div class="field">
+      <label>Password</label>
+      <div class="pw-wrap">
+        <input type="password" id="password" placeholder="Enter your password" autocomplete="current-password">
+        <button class="pw-toggle" type="button" onclick="togglePw('password','eye1')"><span id="eye1">👁️</span></button>
+      </div>
+    </div>
+
+    <div class="forgot-row"><a href="#">Forgot password?</a></div>
+
+    <button class="btn-login" onclick="login()">Login</button>
+
+    <p class="register-link">No account yet? <a href="register.html">Register here</a></p>
+  </div>
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+  function togglePw(id, eyeId) {
+    const inp = document.getElementById(id);
+    const eye = document.getElementById(eyeId);
+    if (inp.type === 'password') { inp.type = 'text'; eye.textContent = '🙈'; }
+    else { inp.type = 'password'; eye.textContent = '👁️'; }
+  }
+  function toggleDark() {
+    document.body.classList.toggle('dark');
+    const icon = document.getElementById('dark-icon');
+    icon.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+  }
+  window.onload = () => {
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark');
+      document.getElementById('dark-icon').textContent = '☀️';
+    }
+  };
+</script>
+</body>
+</html>

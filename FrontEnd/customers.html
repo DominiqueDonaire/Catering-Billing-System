@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Customers</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script>
+    (function () {
+      const size = Number(localStorage.getItem('fontSize'));
+      const resolved = [13, 15, 17, 19].includes(size) ? size : 15;
+      document.documentElement.style.fontSize = '15px';
+      document.documentElement.style.zoom = String(resolved / 15);
+    })();
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; display: flex; min-height: 100vh; }
+    body.dark { background: #181a1b; color: #e8eaed; }
+    .sidebar { width: 220px; background: #fff; border-right: 1px solid #eee; display: flex; flex-direction: column; padding: 24px 0; position: fixed; height: 100vh; z-index: 200; overflow-y: auto; }
+    body.dark .sidebar { background: #202124; border-right-color: #303134; }
+    .sidebar-logo { text-align: center; padding: 0 20px 24px; border-bottom: 1px solid #f0f0f0; margin-bottom: 16px; }
+    body.dark .sidebar-logo { border-bottom-color: #303134; }
+    .sidebar-logo .logo-icon {
+      width: 48px; height: 48px; margin: 0 auto;
+      border-radius: 14px; background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+      display: flex; align-items: center; justify-content: center; color: #c96e00;
+    }
+    body.dark .sidebar-logo .logo-icon { background: #2b2d31; color: #f5c36a; }
+    .sidebar-logo h6 { font-size: 13px; font-weight: 700; color: #e07b00; margin-top: 6px; }
+    .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 24px; cursor: pointer; color: #666; font-size: 14px; font-weight: 500; text-decoration: none; transition: all 0.2s; border-left: 3px solid transparent; }
+    .nav-item:hover, .nav-item.active { background: #fff5ea; color: #e07b00; border-left-color: #e07b00; }
+    body.dark .nav-item { color: #9aa0a6; }
+    body.dark .nav-item:hover, body.dark .nav-item.active { background: #2b2d31; color: #f0c040; border-left-color: #f0c040; }
+    .sidebar-footer { margin-top: auto; padding: 16px 24px; border-top: 1px solid #f0f0f0; }
+    body.dark .sidebar-footer { border-top-color: #303134; }
+    .logout-btn { display: flex; align-items: center; gap: 10px; color: #e53935; font-size: 14px; font-weight: 500; cursor: pointer; background: none; border: none; padding: 0; }
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 150; }
+    body.dark .topbar { background: #202124; border-bottom-color: #303134; }
+    .topbar h5 { font-size: 17px; font-weight: 700; color: #2c2c2c; margin: 0; }
+    body.dark .topbar h5 { color: #e8eaed; }
+    .dark-toggle {
+      width: 40px; height: 40px; border-radius: 12px; border: 1px solid #eee;
+      background: #fff; color: #666; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    body.dark .dark-toggle { background: #2b2d31; border-color: #303134; color: #e8eaed; }
+    .nav-icon, .ui-icon, .logo-icon svg {
+      width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.9;
+      stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0;
+    }
+    .nav-icon-slot {
+      width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .logo-icon svg { width: 24px; height: 24px; }
+    .content { padding: 28px 28px 40px; flex: 1; overflow-y: auto; }
+    .card-box { background: #fff; border-radius: 14px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    body.dark .card-box { background: #202124; }
+    .form-label { font-weight: 600; font-size: 13px; }
+    .form-control, .form-select { border: 1.5px solid #eee; border-radius: 8px; font-size: 14px; padding: 10px 14px; }
+    body.dark .form-control, body.dark .form-select { background: #2b2d31; border-color: #303134; color: #e8eaed; }
+    .btn-orange { background: #e07b00; color: #fff; border: none; border-radius: 8px; padding: 10px 24px; font-weight: 600; }
+    .btn-orange:hover { background: #c96e00; color: #fff; }
+    table { font-size: 14px; }
+    thead { background: #2c2c2c; color: #fff; }
+    body.dark thead { background: #26282c; }
+    .action-btn { border: none; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
+    .btn-edit   { background: #fff3e0; color: #e07b00; }
+    .btn-delete { background: #fce4ec; color: #c62828; margin-left: 6px; }
+    .btn-delete { background: #fce4ec; color: #c62828; margin-left: 6px; }
+    .btn-edit:hover   { background: #e07b00; color: #fff; }
+    .btn-delete:hover { background: #c62828; color: #fff; }
+
+    .section-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+    .section-head h6 { margin: 0; font-size: 15px; font-weight: 800; color: #202124; }
+    body.dark .section-head h6 { color: #e8eaed; }
+    .muted-pill { background: #f6f7f9; color: #6c757d; border-radius: 999px; padding: 4px 10px; font-size: 11px; font-weight: 700; }
+    body.dark .muted-pill { background: #2b2d31; color: #d0d4d9; }
+    .customer-form-card { border: 1px solid #f0f0f0; box-shadow: 0 8px 28px rgba(20,20,20,0.08); }
+    body.dark .customer-form-card { border-color: #303134; box-shadow: 0 8px 28px rgba(0,0,0,0.24); }
+    .customer-form-card.collapsed { display: none; }
+    .form-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .form-title-wrap h6 { margin: 0; font-size: 16px; font-weight: 800; color: #202124; }
+    body.dark .form-title-wrap h6 { color: #e8eaed; }
+    .form-title-wrap span { display: inline-flex; margin-top: 6px; color: #8a8f98; font-size: 12px; font-weight: 600; }
+    .icon-close { width: 34px; height: 34px; border: 0; border-radius: 8px; background: #f6f7f9; color: #4f5965; font-weight: 800; line-height: 1; }
+    .icon-close:hover { background: #ffe9e8; color: #c62828; }
+    body.dark .icon-close { background: #2b2d31; color: #e8eaed; }
+    .form-actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 4px; }
+    .table-card { overflow: hidden; }
+    .table-card .table-responsive { border: 1px solid #edf0f2; border-radius: 10px; }
+    body.dark .table-card .table-responsive { border-color: #303134; }
+    .customer-table { margin-bottom: 0; }
+    .customer-table thead th { white-space: nowrap; font-size: 12px; letter-spacing: 0.02em; text-transform: uppercase; padding: 14px 12px; }
+    .customer-table tbody td { padding: 14px 12px; vertical-align: middle; }
+    .customer-row { cursor: pointer; transition: background 0.18s, box-shadow 0.18s; }
+    .customer-row:hover { background: #fffaf4; }
+    .customer-row.selected { background: #fff5ea; box-shadow: inset 4px 0 0 #e07b00; }
+    body.dark .customer-row:hover { background: #2a2d32; }
+    body.dark .customer-row.selected { background: #2b2d31; box-shadow: inset 4px 0 0 #f0c040; }
+    .customer-name { font-weight: 700; color: #202124; }
+    body.dark .customer-name { color: #e8eaed; }
+    .customer-id { color: #8a8f98; font-size: 12px; font-weight: 700; }
+    .empty-state { padding: 34px 18px; text-align: center; color: #8a8f98; font-size: 13px; }
+    @media (max-width: 900px) {
+      .content { padding: 20px; }
+      .main { margin-left: 0; }
+      .sidebar { position: static; width: 100%; height: auto; }
+      body { display: block; }
+      .section-head, .form-header { align-items: stretch; flex-direction: column; }
+      .section-head .btn { width: 100%; }
+    }
+
+    /* ── CUSTOMER PROFILE CARD ── */
+    .profile-card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    body.dark .profile-card { background: #202124; }
+    .profile-header {
+      background: linear-gradient(135deg, #e07b00, #f5a623);
+      padding: 28px 32px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .profile-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px; font-weight: 700; color: #fff;
+      flex-shrink: 0; border: 3px solid rgba(255,255,255,0.5);
+    }
+    .profile-header-info h5 { color: #fff; font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+    .profile-header-info p  { color: rgba(255,255,255,0.85); font-size: 13px; margin: 0; }
+    .profile-body { padding: 28px 32px; }
+    .profile-field {
+      display: flex; align-items: flex-start; gap: 14px;
+      padding: 14px 0; border-bottom: 1px solid #f0f0f0;
+    }
+    body.dark .profile-field { border-bottom-color: #303134; }
+    .profile-field:last-child { border-bottom: none; }
+    .field-icon { width: 36px; height: 36px; border-radius: 10px; background: #fff5ea; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    body.dark .field-icon { background: #2b2d31; }
+    .field-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .field-value { font-size: 14px; font-weight: 500; color: #2c2c2c; }
+    body.dark .field-value { color: #e8eaed; }
+
+    /* edit profile form */
+    .edit-form { padding: 24px 32px; border-top: 1px solid #f0f0f0; display: none; }
+    body.dark .edit-form { border-top-color: #303134; }
+    .edit-form.show { display: block; }
+    .edit-form h6 { font-weight: 700; margin-bottom: 18px; font-size: 14px; color: #e07b00; }
+
+    /* success toast */
+    .toast-msg {
+      position: fixed; bottom: 28px; right: 28px;
+      background: #2e7d32; color: #fff;
+      padding: 12px 20px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      z-index: 9999; display: none;
+      animation: slideUp 0.3s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon"><span id="logo-icon-slot"></span></div>
+    <h6>CATERING BILLING</h6>
+  </div>
+  <a href="dashboard.html" class="nav-item"><span class="nav-icon-slot" data-icon="home"></span><span>Dashboard</span></a>
+  <a href="customers.html" class="nav-item active" id="nav-customers"><span class="nav-icon-slot" data-icon="user"></span><span>Customers</span></a>
+  <a href="menu.html"      class="nav-item"><span class="nav-icon-slot" data-icon="menu"></span><span>Menu Items</span></a>
+  <a href="orders.html"    class="nav-item"><span class="nav-icon-slot" data-icon="clipboard"></span><span>Orders</span></a>
+  <a href="payments.html"  class="nav-item"><span class="nav-icon-slot" data-icon="card"></span><span>Payments</span></a>
+  <div class="sidebar-footer">
+    <button class="logout-btn" onclick="logout()"><span class="nav-icon-slot" data-icon="logout"></span><span>Logout</span></button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <h5 id="page-title"><span style="display:inline-flex;align-items:center;gap:10px;"><span class="nav-icon-slot" data-icon="user"></span><span>Customer Management</span></span></h5>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="dark-toggle" onclick="toggleDark()"><span id="dark-icon"></span></button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div id="topbar-avatar" style="width:34px;height:34px;border-radius:50%;background:#e07b00;color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;">A</div>
+        <div>
+          <div id="topbar-user" style="font-size:14px;font-weight:600;line-height:1.2"></div>
+          <span id="topbar-role" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════════════════
+         CUSTOMER VIEW — own profile only
+    ════════════════════════════════════════════════════════ -->
+    <div id="view-customer" style="display:none;">
+
+      <div class="profile-card">
+        <!-- header -->
+        <div class="profile-header">
+          <div class="profile-avatar" id="prof-avatar">—</div>
+          <div class="profile-header-info">
+            <h5 id="prof-name">Loading...</h5>
+            <p>Customer Account</p>
+          </div>
+        </div>
+
+        <!-- profile fields -->
+        <div class="profile-body">
+          <div class="profile-field">
+            <div class="field-icon">🪪</div>
+            <div><div class="field-label">Customer ID</div><div class="field-value" id="prof-id">—</div></div>
+          </div>
+          <div class="profile-field">
+            <div class="field-icon">📞</div>
+            <div><div class="field-label">Phone Number</div><div class="field-value" id="prof-phone">—</div></div>
+          </div>
+          <div class="profile-field">
+            <div class="field-icon">📧</div>
+            <div><div class="field-label">Email Address</div><div class="field-value" id="prof-email">—</div></div>
+          </div>
+          <div class="profile-field">
+            <div class="field-icon">📍</div>
+            <div><div class="field-label">Address</div><div class="field-value" id="prof-address">—</div></div>
+          </div>
+        </div>
+
+        <!-- edit form (hidden by default) -->
+        <div class="edit-form" id="edit-form">
+          <h6>✏️ Edit My Profile</h6>
+          <input type="hidden" id="prof-cust-id">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">First Name</label>
+              <input type="text" id="edit-fname" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Last Name</label>
+              <input type="text" id="edit-lname" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Phone</label>
+              <input type="text" id="edit-phone" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email</label>
+              <input type="email" id="edit-email" class="form-control">
+            </div>
+            <div class="col-12">
+              <label class="form-label">Address</label>
+              <input type="text" id="edit-address" class="form-control">
+            </div>
+            <div class="col-12 d-flex gap-2">
+              <button class="btn-orange btn" onclick="saveProfile()">💾 Save Changes</button>
+              <button class="btn btn-secondary" onclick="toggleEditForm(false)">✖ Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- edit toggle button -->
+      <button class="btn-orange btn" onclick="toggleEditForm(true)" id="edit-profile-btn">
+        ✏️ Edit My Profile
+      </button>
+
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+         ADMIN / STAFF VIEW — full table
+    ════════════════════════════════════════════════════════ -->
+    <div id="view-admin-staff" style="display:none;">
+
+      <!-- ADD / EDIT FORM (admin + staff) -->
+      <div class="card-box customer-form-card collapsed" id="customer-form-card">
+        <div class="form-header">
+          <div class="form-title-wrap">
+            <h6 id="form-title">Add Customer</h6>
+            <span id="form-subtitle">New customer record</span>
+          </div>
+          <button class="icon-close" type="button" onclick="closeCustomerForm()" aria-label="Close customer form">x</button>
+        </div>
+        <input type="hidden" id="customer-id">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label">First Name</label>
+            <input type="text" id="fname" class="form-control" placeholder="First Name">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Last Name</label>
+            <input type="text" id="lname" class="form-control" placeholder="Last Name">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Phone</label>
+            <input type="text" id="phone" class="form-control" placeholder="09XXXXXXXXX">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Email</label>
+            <input type="email" id="email" class="form-control" placeholder="email@example.com">
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Address</label>
+            <input type="text" id="address" class="form-control" placeholder="Full Address">
+          </div>
+          <div class="col-12 form-actions">
+            <button class="btn-orange btn" onclick="saveCustomer()">Save Customer</button>
+            <button class="btn btn-secondary" onclick="closeCustomerForm()">Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="card-box table-card">
+        <div class="section-head">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <h6>Customer List</h6>
+            <span class="muted-pill" id="customer-count">0 records</span>
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle customer-table">
+            <thead>
+              <tr>
+                <th>ID</th><th>Name</th>
+                <th>Phone</th><th>Email</th><th>Address</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="customer-table"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<!-- toast -->
+<div class="toast-msg" id="toast">✅ Saved successfully!</div>
+
+<script>
+const API      = 'http://127.0.0.1:5000';
+const role     = localStorage.getItem('role');
+const username = localStorage.getItem('username') || '';
+const custId   = localStorage.getItem('customer_id');
+let selectedCustomerId = null;
+
+const ICONS = {
+  sun: '<svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"></path></svg>',
+  moon: '<svg class="ui-icon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg>',
+  tray: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 15h18"></path><path d="M5 15a7 7 0 0 1 14 0"></path><path d="M8 10V8a4 4 0 0 1 8 0v2"></path></svg>',
+  home: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"></path><path d="M5 9.5V21h14V9.5"></path></svg>',
+  user: '<svg class="nav-icon" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 20a7 7 0 0 1 14 0"></path></svg>',
+  menu: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M4.5 7.5h15"></path><path d="M6 4.5h12a2.5 2.5 0 0 1 2.5 2.5v10A2.5 2.5 0 0 1 18 19.5H6A2.5 2.5 0 0 1 3.5 17V7A2.5 2.5 0 0 1 6 4.5Z"></path><path d="M7.5 12h9"></path><path d="M7.5 16.5h6"></path></svg>',
+  clipboard: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="4" rx="1.5"></rect><path d="M8 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"></path></svg>',
+  card: '<svg class="nav-icon" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5"></rect><path d="M2.5 10h19"></path><path d="M6.5 15h4"></path><path d="M17 15h.01"></path></svg>',
+  logout: '<svg class="nav-icon" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><path d="M16 17l5-5-5-5"></path><path d="M21 12H9"></path></svg>'
+};
+function icon(name) { return ICONS[name] || ''; }
+function applyStaticIcons() {
+  document.getElementById('logo-icon-slot').innerHTML = icon('tray');
+  document.querySelectorAll('.nav-icon-slot').forEach(node => {
+    node.innerHTML = icon(node.dataset.icon);
+  });
+}
+
+if (!role || !username) window.location.href = 'login.html';
+applyStaticIcons();
+
+// topbar
+document.getElementById('topbar-user').textContent   = username;
+document.getElementById('topbar-avatar').textContent = username.charAt(0).toUpperCase();
+const roleEl = document.getElementById('topbar-role');
+roleEl.textContent = role;
+const roleStyles = {
+  admin:    'background:#fff3e0;color:#e07b00;',
+  staff:    'background:#e3f2fd;color:#1565c0;',
+  customer: 'background:#e8f5e9;color:#2e7d32;'
+};
+roleEl.style.cssText += roleStyles[role] || 'background:#f5f5f5;color:#666;';
+
+// sidebar
+if (role === 'customer') {
+  // relabel "Customers" → "My Profile" in sidebar — don't hide it
+  const nc = document.getElementById('nav-customers');
+  if (nc) nc.innerHTML = `<span class="nav-icon-slot" data-icon="user">${icon('user')}</span><span>My Profile</span>`;
+}
+
+// ── route by role ─────────────────────────────────────────────
+if (role === 'customer') {
+  document.getElementById('page-title').innerHTML   = `<span style="display:inline-flex;align-items:center;gap:10px;"><span class="nav-icon-slot" data-icon="user">${icon('user')}</span><span>My Profile</span></span>`;
+  document.getElementById('view-customer').style.display    = 'block';
+  document.getElementById('view-admin-staff').style.display = 'none';
+  loadProfile();
+} else {
+  document.getElementById('view-customer').style.display    = 'none';
+  document.getElementById('view-admin-staff').style.display = 'block';
+  loadCustomers();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CUSTOMER — PROFILE
+// ══════════════════════════════════════════════════════════════
+async function loadProfile() {
+  if (!custId) {
+    document.getElementById('prof-name').textContent = username;
+    document.getElementById('prof-avatar').textContent = username.charAt(0).toUpperCase();
+    return;
+  }
+  try {
+    const res  = await fetch(`${API}/customers/${custId}`);
+    if (!res.ok) throw new Error('Profile not found');
+    const data = await res.json();
+    renderProfile(data);
+  } catch(e) {
+    console.error('Profile load error:', e);
+    document.getElementById('prof-name').textContent = username;
+    document.getElementById('prof-avatar').textContent = username.charAt(0).toUpperCase();
+  }
+}
+
+function renderProfile(c) {
+  const firstName = c.FirstName || '';
+  const lastName = c.LastName || '';
+  const fullName = `${firstName} ${lastName}`.trim() || username;
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0) || fullName.charAt(0)}`.toUpperCase();
+  document.getElementById('prof-avatar').textContent  = initials;
+  document.getElementById('prof-name').textContent    = fullName;
+  document.getElementById('prof-id').textContent      = `C-${String(c.CustomerID).padStart(4,'0')}`;
+  document.getElementById('prof-phone').textContent   = c.Phone   || '—';
+  document.getElementById('prof-email').textContent   = c.Email   || '—';
+  document.getElementById('prof-address').textContent = c.Address || '—';
+
+  // pre-fill edit form
+  document.getElementById('prof-cust-id').value = c.CustomerID;
+  document.getElementById('edit-fname').value   = firstName;
+  document.getElementById('edit-lname').value   = lastName;
+  document.getElementById('edit-phone').value   = c.Phone   || '';
+  document.getElementById('edit-email').value   = c.Email   || '';
+  document.getElementById('edit-address').value = c.Address || '';
+}
+
+function toggleEditForm(show) {
+  const form = document.getElementById('edit-form');
+  const btn  = document.getElementById('edit-profile-btn');
+  if (show) {
+    form.classList.add('show');
+    btn.style.display = 'none';
+    form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } else {
+    form.classList.remove('show');
+    btn.style.display = 'inline-flex';
+  }
+}
+
+async function saveProfile() {
+  const id   = document.getElementById('prof-cust-id').value;
+  const data = {
+    FirstName: document.getElementById('edit-fname').value.trim(),
+    LastName:  document.getElementById('edit-lname').value.trim(),
+    Phone:     document.getElementById('edit-phone').value.trim(),
+    Email:     document.getElementById('edit-email').value.trim(),
+    Address:   document.getElementById('edit-address').value.trim()
+  };
+  if (!data.FirstName || !data.LastName) {
+    alert('First and Last name are required.'); return;
+  }
+  try {
+    const res = await fetch(`${API}/customers/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Profile save failed');
+    showToast('✅ Profile updated successfully!');
+    toggleEditForm(false);
+    loadProfile();
+  } catch(e) {
+    alert('Failed to save. Please try again.');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+//  ADMIN / STAFF — TABLE
+// ══════════════════════════════════════════════════════════════
+async function loadCustomers() {
+  try {
+    const res   = await fetch(`${API}/customers`);
+    if (!res.ok) throw new Error('Customers not found');
+    const data  = await res.json();
+    if (!Array.isArray(data)) throw new Error('Invalid customer response');
+    const tbody = document.getElementById('customer-table');
+    const count = document.getElementById('customer-count');
+    tbody.innerHTML = '';
+    count.textContent = `${data.length} record${data.length !== 1 ? 's' : ''}`;
+
+    if (data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state">No customers yet</div></td></tr>';
+      return;
+    }
+
+    data.forEach(c => tbody.appendChild(buildCustomerRow(c)));
+    highlightSelectedRow();
+  } catch (e) {
+    showToast('Cannot load customers. Please check the server.', '#c62828');
+  }
+}
+
+function buildCustomerRow(c) {
+  const tr = document.createElement('tr');
+  tr.className = 'customer-row';
+  tr.dataset.customerId = c.CustomerID;
+  tr.innerHTML = `
+    <td><span class="customer-id">C-${String(c.CustomerID).padStart(4, '0')}</span></td>
+    <td>
+      <div class="customer-name">${escapeHtml(c.FirstName)} ${escapeHtml(c.LastName)}</div>
+    </td>
+    <td>${escapeHtml(displayValue(c.Phone))}</td>
+    <td>${escapeHtml(displayValue(c.Email))}</td>
+    <td>${escapeHtml(displayValue(c.Address))}</td>
+    <td></td>
+  `;
+
+  tr.addEventListener('click', () => editCustomer(c));
+
+  const actionCell = tr.lastElementChild;
+  if (role === 'admin' || role === 'staff') {
+    const editBtn = document.createElement('button');
+    editBtn.className = 'action-btn btn-edit';
+    editBtn.type = 'button';
+    editBtn.textContent = 'Edit';
+    editBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      editCustomer(c);
+    });
+    actionCell.appendChild(editBtn);
+
+
+  if (role === 'admin') {
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'action-btn btn-delete';
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.addEventListener('click', event => {
+      event.stopPropagation();
+      deleteCustomer(c.CustomerID);
+    });
+    actionCell.appendChild(deleteBtn);
+  }
+  }
+  return tr;
+}
+
+async function saveCustomer() {
+  const id   = document.getElementById('customer-id').value;
+  const saveButton = document.querySelector('#customer-form-card .btn-orange');
+  const data = {
+    FirstName: document.getElementById('fname').value.trim(),
+    LastName:  document.getElementById('lname').value.trim(),
+    Phone:     document.getElementById('phone').value.trim(),
+    Email:     document.getElementById('email').value.trim(),
+    Address:   document.getElementById('address').value.trim()
+  };
+  if (!data.FirstName || !data.LastName || !data.Phone) {
+    window.AppUI?.shakeInvalid(['fname', 'lname', 'phone']);
+    alert('Please fill in required fields'); return;
+  }
+  try {
+    window.AppUI?.setButtonLoading(saveButton, true, id ? 'Saving Customer' : 'Adding Customer');
+    const res = await fetch(id ? `${API}/customers/${id}` : `${API}/customers`, {
+      method: id ? 'PUT' : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error('Save failed');
+
+    window.AppUI?.setButtonLoading(saveButton, false);
+    closeCustomerForm();
+    showToast(id ? 'Customer updated!' : 'Customer added!');
+    loadCustomers();
+  } catch (e) {
+    window.AppUI?.setButtonLoading(saveButton, false);
+    showToast('Unable to save customer. Please try again.', '#c62828');
+  }
+}
+
+function startAddCustomer() {
+  resetCustomerForm();
+  selectedCustomerId = null;
+  document.getElementById('form-title').textContent = 'Add Customer';
+  document.getElementById('form-subtitle').textContent = 'New customer record';
+  showCustomerForm();
+}
+
+function editCustomer(customer) {
+  selectedCustomerId = customer.CustomerID;
+  document.getElementById('customer-id').value      = customer.CustomerID;
+  document.getElementById('fname').value            = customer.FirstName || '';
+  document.getElementById('lname').value            = customer.LastName || '';
+  document.getElementById('phone').value            = customer.Phone || '';
+  document.getElementById('email').value            = customer.Email || '';
+  document.getElementById('address').value          = customer.Address || '';
+  document.getElementById('form-title').textContent = 'Edit Customer';
+  document.getElementById('form-subtitle').textContent =
+    `C-${String(customer.CustomerID).padStart(4, '0')}`;
+  showCustomerForm();
+  highlightSelectedRow();
+}
+
+async function deleteCustomer(id) {
+  if (!confirm('Delete this customer? This will also remove their login account. This cannot be undone.')) return;
+  const row = document.querySelector(`.customer-row[data-customer-id="${id}"]`);
+  try {
+    const res = await fetch(`${API}/customers/${id}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      showToast(data.message || 'Unable to delete customer.', '#c62828');
+      return;
+    }
+    await window.AppUI?.animateRemoval(row, 'app-removing-row');
+    if (String(selectedCustomerId) === String(id)) closeCustomerForm();
+    showToast('Customer deleted.', '#c62828');
+    loadCustomers();
+  } catch (e) {
+    showToast('Unable to delete customer. Please try again.', '#c62828');
+  }
+}
+
+function clearForm() {
+  closeCustomerForm();
+}
+
+function closeCustomerForm() {
+  resetCustomerForm();
+  document.getElementById('customer-form-card').classList.add('collapsed');
+  selectedCustomerId = null;
+  highlightSelectedRow();
+}
+
+function resetCustomerForm() {
+  ['customer-id','fname','lname','phone','email','address']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('form-title').textContent = 'Add Customer';
+  document.getElementById('form-subtitle').textContent = 'New customer record';
+}
+
+function showCustomerForm() {
+  const form = document.getElementById('customer-form-card');
+  form.classList.remove('collapsed');
+  form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => document.getElementById('fname').focus(), 250);
+}
+
+function highlightSelectedRow() {
+  document.querySelectorAll('.customer-row').forEach(row => {
+    row.classList.toggle('selected', row.dataset.customerId === String(selectedCustomerId));
+  });
+}
+
+function displayValue(value) {
+  return value ? value : '-';
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[char]));
+}
+
+// ── toast ─────────────────────────────────────────────────────
+function showToast(msg, color = '#2e7d32') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color;
+  t.style.display = 'block';
+  t.classList.add('show');
+  setTimeout(() => {
+    t.classList.remove('show');
+    t.style.display = 'none';
+  }, 2800);
+}
+
+function logout() {
+  if (confirm('Logout?')) { localStorage.clear(); window.location.href = 'login.html'; }
+}
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  document.getElementById('dark-icon').innerHTML =
+    document.body.classList.contains('dark') ? icon('sun') : icon('moon');
+  localStorage.setItem('darkMode', document.body.classList.contains('dark'));
+}
+
+window.onload = () => {
+  document.getElementById('dark-icon').innerHTML = icon('moon');
+  if (localStorage.getItem('darkMode') === 'true') {
+    document.body.classList.add('dark');
+    document.getElementById('dark-icon').innerHTML = icon('sun');
+  }
+};
+</script>
+<script src="settings.js"></script>
+</body>
+</html>
