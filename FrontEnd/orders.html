@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Orders</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <script>
     (function () {
       const size = Number(localStorage.getItem('fontSize'));
@@ -64,6 +65,30 @@
     table { font-size: 14px; }
     thead { background: #2c2c2c; color: #fff; }
     body.dark thead { background: #26282c; }
+    body.dark .table {
+      --bs-table-bg: #202124;
+      --bs-table-color: #e8eaed;
+      --bs-table-border-color: #303134;
+      --bs-table-striped-bg: #242628;
+      --bs-table-striped-color: #e8eaed;
+      --bs-table-hover-bg: #2a2d32;
+      --bs-table-hover-color: #e8eaed;
+    }
+    body.dark .table > :not(caption) > * > * {
+      background-color: var(--bs-table-bg) !important;
+      color: var(--bs-table-color) !important;
+      border-bottom-color: var(--bs-table-border-color) !important;
+      box-shadow: none !important;
+    }
+    body.dark .table thead th {
+      background: #26282c !important;
+      color: #e8eaed !important;
+      border-bottom-color: #303134 !important;
+    }
+    body.dark .table-hover > tbody > tr:hover > * {
+      background-color: #2a2d32 !important;
+      color: #e8eaed !important;
+    }
     .action-btn { border: none; border-radius: 6px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; }
     .tab-btn-selected { background: #e65100 !important; color: #fff !important; }
     .btn-edit   { background: #fff3e0; color: #e07b00; }
@@ -291,8 +316,8 @@
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:16px">
         <h6 class="fw-bold mb-0">Order Management</h6>
         <div id="archive-tabs" style="display:none;gap:6px;display:flex">
-          <button id="tab-btn-active" class="action-btn tab-btn-selected" onclick="showTab('active')" style="font-size:13px">📋 Active Orders</button>
-          <button id="tab-btn-archived" class="action-btn" onclick="showTab('archived')" style="font-size:13px;background:#fff3e0;color:#e65100">🗄️ Archives</button>
+          <button id="tab-btn-active" class="action-btn tab-btn-selected" onclick="showTab('active')" style="font-size:13px"><i class="bi bi-list-ul"></i> Active Orders</button>
+          <button id="tab-btn-archived" class="action-btn" onclick="showTab('archived')" style="font-size:13px;background:#fff3e0;color:#e65100"><i class="bi bi-archive"></i> Archives</button>
         </div>
       </div>
 
@@ -531,18 +556,18 @@ async function loadOrders() {
     let countdownBadge = '';
     if (role === 'customer' && o.Status === 'Confirmed') {
       if (daysUntil <= 0) {
-        countdownBadge = `<span class="countdown-badge badge-locked">🔒 Editing closed</span>`;
+        countdownBadge = `<span class="countdown-badge badge-locked">Editing closed</span>`;
       } else if (daysUntil <= 2) {
-        countdownBadge = `<span class="countdown-badge badge-danger">🔒 Last day to edit</span>`;
+        countdownBadge = `<span class="countdown-badge badge-danger">Last day to edit</span>`;
       } else if (daysUntil <= 7) {
-        countdownBadge = `<span class="countdown-badge badge-warn">⚠️ Closes in ${daysUntil} days</span>`;
+        countdownBadge = `<span class="countdown-badge badge-warn">Closes in ${daysUntil} days</span>`;
       }
     }
 
     const editDishesBtn = canEditDishes
-      ? `<button class="action-btn btn-edit" onclick="openInlineEdit(${o.OrderID})" style="margin-bottom:4px">✏️ Edit Order</button><br>`
+      ? `<button class="action-btn btn-edit" onclick="openInlineEdit(${o.OrderID})" style="margin-bottom:4px"><i class="bi bi-pencil-square"></i> Edit Order</button><br>`
       : editingLocked
-        ? `<button class="action-btn" disabled style="margin-bottom:4px;opacity:.45;cursor:not-allowed;background:#f5f5f5;color:#aaa">🔒 Editing Closed</button><br>`
+        ? `<button class="action-btn" disabled style="margin-bottom:4px;opacity:.45;cursor:not-allowed;background:#f5f5f5;color:#aaa">Editing Closed</button><br>`
         : '';
     const viewDishesBtn = role === 'customer'
       ? `<button class="action-btn" onclick="viewDishes(${o.OrderID})"
@@ -562,8 +587,8 @@ async function loadOrders() {
         <td>₱${parseFloat(o.TotalAmount).toFixed(2)}</td>
         <td>${statusBadge(o.Status)}</td>
         <td>
-          ${canEdit   ? `<button class="action-btn btn-edit" onclick="editOrder(${o.OrderID})">✏️ Edit</button>` : ''}
-          ${canDelete ? `<button class="action-btn btn-delete" onclick="deleteOrder(${o.OrderID})">🗄️ Archive</button>` : ''}
+          ${canEdit   ? `<button class="action-btn btn-edit" onclick="editOrder(${o.OrderID})"><i class="bi bi-pencil-square"></i> Edit</button>` : ''}
+          ${canDelete ? `<button class="action-btn btn-delete" onclick="deleteOrder(${o.OrderID})"><i class="bi bi-archive"></i> Archive</button>` : ''}
           ${!canEdit && !canDelete ? viewDishesBtn + editDishesBtn + cancelActionHtml(o) : ''}
         </td>`;
     tbody.appendChild(tr);
@@ -598,7 +623,7 @@ async function editOrder(id) {
       <td colspan="9">
         <div class="drawer-inner">
           <div class="drawer-header">
-            <span class="drawer-header-icon">✏️</span>
+            <span class="drawer-header-icon"><i class="bi bi-pencil-square"></i></span>
             <span class="drawer-title">Order #${order.OrderID}</span>
             <span class="drawer-badge">${order.Status}</span>
           </div>
@@ -620,8 +645,8 @@ async function editOrder(id) {
           <div class="drawer-footer">
             <label>Update Status:</label>
             <select id="drawer-status-${id}" class="drawer-select">${statusOptions}</select>
-            <button class="drawer-save" onclick="saveOrder(${id})">💾 Save Changes</button>
-            <button class="drawer-cancel-btn" onclick="clearForm()">✖ Cancel</button>
+            <button class="drawer-save" onclick="saveOrder(${id})"><i class="bi bi-floppy"></i> Save Changes</button>
+            <button class="drawer-cancel-btn" onclick="clearForm()">Cancel</button>
           </div>
         </div>
       </td>
@@ -888,7 +913,7 @@ async function viewDishes(orderId) {
     document.getElementById('view-dishes-loading').style.display = 'none';
     document.getElementById('view-dishes-body').style.display    = 'block';
   } catch(e) {
-    document.getElementById('view-dishes-loading').textContent = '❌ Could not load dishes.';
+    document.getElementById('view-dishes-loading').textContent = 'Could not load dishes.';
   }
 }
 
@@ -958,13 +983,13 @@ function renderInlineEditor(orderId, order) {
             <span class="qty-display">${i.Quantity}</span>
             <button class="qty-btn" onclick="cQty(${orderId},${i.ItemID},1)">+</button>
             <div class="dish-subtotal">${formatMoney(sub)}</div>
-            <button class="remove-dish-btn" onclick="removeDish(${orderId},${i.ItemID})">✕ Remove</button>
+            <button class="remove-dish-btn" onclick="removeDish(${orderId},${i.ItemID})">Remove</button>
           </div>`;
       }).join('');
 
   container.innerHTML = `
     <div class="drawer-header">
-      <span style="font-size:18px">✏️</span>
+      <span style="font-size:18px"><i class="bi bi-pencil-square"></i></span>
       <span class="drawer-title">Edit Order #${orderId}</span>
       <span class="drawer-badge">${order.Status}</span>
     </div>
@@ -972,7 +997,7 @@ function renderInlineEditor(orderId, order) {
 
       <!-- Section 1: Event Details -->
       <div class="edit-section">
-        <div class="edit-section-title">📍 Event Details</div>
+        <div class="edit-section-title">Event Details</div>
         <div class="field-grid-3">
           <div>
             <label class="ef-label">Order # (read-only)</label>
@@ -1012,7 +1037,7 @@ function renderInlineEditor(orderId, order) {
 
       <!-- Section 3: Add a Dish -->
       <div class="edit-section">
-        <div class="edit-section-title">➕ Add a Dish</div>
+        <div class="edit-section-title">Add a Dish</div>
         ${available.length === 0
           ? `<div style="font-size:12px;color:#aaa">All available dishes are already added.</div>`
           : `<div class="add-dish-row">
@@ -1032,8 +1057,8 @@ function renderInlineEditor(orderId, order) {
       </div>
     </div>
     <div class="drawer-footer">
-      <button class="drawer-save" onclick="saveInlineEdit(${orderId})">💾 Save All Changes</button>
-      <button class="drawer-cancel-btn" onclick="clearForm()">✖ Cancel</button>
+      <button class="drawer-save" onclick="saveInlineEdit(${orderId})"><i class="bi bi-floppy"></i> Save All Changes</button>
+      <button class="drawer-cancel-btn" onclick="clearForm()">Cancel</button>
     </div>`;
 }
 
@@ -1104,7 +1129,7 @@ async function saveInlineEdit(orderId) {
   });
   if (!dishesRes.ok) { const d = await dishesRes.json(); window.AppUI?.setButtonLoading(saveButton, false); alert(d.message || 'Error saving dishes'); return; }
 
-  showToast('✅ Order updated successfully!');
+  showToast('Order updated successfully.');
   clearForm();
   loadOrders();
 }
@@ -1151,7 +1176,7 @@ window.onload = () => {
         <div id="view-order-title" style="font-size:11px;color:#aaa;margin-top:2px"></div>
       </div>
       <button onclick="closeViewDishesModal()"
-        style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa">✕</button>
+        style="background:none;border:none;font-size:20px;cursor:pointer;color:#aaa">Close</button>
     </div>
 
     <!-- Loading -->

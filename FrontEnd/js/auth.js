@@ -7,7 +7,7 @@ async function login() {
   hideMessages();
 
   if (!username || !password) {
-    showError('⚠️ Please enter your username and password');
+    showError('Please enter your username and password');
     return;
   }
 
@@ -31,9 +31,9 @@ async function login() {
 
     if (res.status === 401) {
       if (data.error === 'Username not found') {
-        showError('❌ Username does not exist. Please check and try again.');
+        showError('Username does not exist. Please check and try again.');
       } else if (data.error === 'Incorrect password') {
-        showError('🔒 Incorrect password. Please try again.');
+        showError('Incorrect password. Please try again.');
         const pwdField = document.getElementById('password');
         pwdField.style.borderBottomColor = '#e53935';
         pwdField.value = '';
@@ -52,7 +52,7 @@ async function login() {
     localStorage.setItem('username', data.username);
     localStorage.setItem('customer_id', data.customer_id ?? '');
 
-    showSuccess(`✅ Welcome ${data.username}! Redirecting...`);
+    showSuccess(`Welcome ${data.username}! Redirecting...`);
     setTimeout(() => {
       window.location.href = 'dashboard.html';
     }, 1200);
@@ -60,7 +60,7 @@ async function login() {
   } catch (err) {
     btn.textContent = 'SIGN IN';
     btn.disabled = false;
-    showError('🔌 Cannot connect to server. Make sure Flask is running.');
+    showError('Cannot connect to server. Make sure Flask is running.');
   }
 }
 
@@ -78,23 +78,23 @@ async function register() {
 
   // validations
   if (!fname || !lname || !username || !email || !phone || !password || !confirm) {
-    showError('⚠️ Please fill in all fields');
+    showError('Please fill in all fields');
     return;
   }
   if (!/^\S+@\S+\.\S+$/.test(email)) {
-    showError('⚠️ Please enter a valid email address');
+    showError('Please enter a valid email address');
     return;
   }
   if (!/^09\d{9}$/.test(phone)) {
-    showError('⚠️ Phone must be 11 digits starting with 09');
+    showError('Phone must be 11 digits starting with 09');
     return;
   }
   if (password.length < 6) {
-    showError('⚠️ Password must be at least 6 characters');
+    showError('Password must be at least 6 characters');
     return;
   }
   if (password !== confirm) {
-    showError('⚠️ Passwords do not match');
+    showError('Passwords do not match');
     return;
   }
 
@@ -122,19 +122,19 @@ async function register() {
     btn.disabled = false;
 
     if (!res.ok) {
-      showError(`❌ ${data.error}`);
+      showError(`${data.error}`);
       return;
     }
 
-    // ✅ show success and countdown
+    // show success and countdown
     let countdown = 3;
     const suc = document.getElementById('success-msg');
     suc.style.display = 'block';
-    suc.innerHTML = `✅ Account created successfully! Redirecting to login in <strong>${countdown}</strong>s...`;
+    suc.innerHTML = `Account created successfully! Redirecting to login in <strong>${countdown}</strong>s...`;
 
     const timer = setInterval(() => {
       countdown--;
-      suc.innerHTML = `✅ Account created successfully! Redirecting to login in <strong>${countdown}</strong>s...`;
+      suc.innerHTML = `Account created successfully! Redirecting to login in <strong>${countdown}</strong>s...`;
       if (countdown <= 0) {
         clearInterval(timer);
         window.location.href = 'login.html';
@@ -144,7 +144,7 @@ async function register() {
   } catch (err) {
     btn.textContent = 'SIGN UP';
     btn.disabled = false;
-    showError('🔌 Cannot connect to server. Make sure Flask is running.');
+    showError('Cannot connect to server. Make sure Flask is running.');
   }
 }
 

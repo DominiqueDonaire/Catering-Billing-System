@@ -998,7 +998,7 @@ function renderOrderTracker(orders) {
       const cls    = done ? 'done' : active ? 'active' : '';
       return `
         <div class="tracker-step">
-          <div class="step-dot ${cls}">${done ? '✓' : i+1}</div>
+          <div class="step-dot ${cls}">${i+1}</div>
           <div class="step-label ${cls}">${s}</div>
         </div>
         ${i<steps.length-1 ? `<div class="step-line ${done||active?'done':''}"></div>` : ''}`;

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Menu — Catering Billing System</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <script>
     (function () {
       const size = Number(localStorage.getItem('fontSize'));
@@ -717,20 +718,20 @@
     <div class="item-browser">
 
       <div class="search-wrap">
-        <span class="search-icon">🔍</span>
+        <span class="search-icon"><i class="bi bi-search"></i></span>
         <input type="text" id="search-input"
                placeholder="Search menu items..."
                oninput="debouncedFilter()">
       </div>
 
       <div class="filter-row" id="cat-tabs">
-        <button class="filter-btn active" onclick="setCategory('Main Course',this)">🍖 Main Course</button>
-        <button class="filter-btn" onclick="setCategory('Rice & Pasta',this)">🍚 Rice & Pasta</button>
-        <button class="filter-btn" onclick="setCategory('Appetizer',this)">🥗 Appetizer</button>
-        <button class="filter-btn" onclick="setCategory('Side Dish',this)">🥘 Side Dish</button>
-        <button class="filter-btn" onclick="setCategory('Dessert',this)">🍮 Dessert</button>
-        <button class="filter-btn" onclick="setCategory('Beverage',this)">🥤 Beverage</button>
-        <button class="filter-btn" onclick="setCategory('Package',this)">📦 Package</button>
+        <button class="filter-btn active" onclick="setCategory('Main Course',this)">Main Course</button>
+        <button class="filter-btn" onclick="setCategory('Rice & Pasta',this)">Rice & Pasta</button>
+        <button class="filter-btn" onclick="setCategory('Appetizer',this)">Appetizer</button>
+        <button class="filter-btn" onclick="setCategory('Side Dish',this)">Side Dish</button>
+        <button class="filter-btn" onclick="setCategory('Dessert',this)">Dessert</button>
+        <button class="filter-btn" onclick="setCategory('Beverage',this)">Beverage</button>
+        <button class="filter-btn" onclick="setCategory('Package',this)">Package</button>
       </div>
 
       <div class="item-grid" id="item-grid">
@@ -742,13 +743,13 @@
     <!-- RIGHT panel: Popular Dishes (admin/staff) OR Bills (customer) -->
     <!-- POPULAR DISHES — admin & staff -->
     <div class="bills-panel" id="panel-popular">
-      <div class="bills-header">🔥 Popular Dishes</div>
+      <div class="bills-header"><i class="bi bi-bar-chart-line"></i> Popular Dishes</div>
       <div style="padding:10px 20px 6px;flex-shrink:0;">
         <span style="font-size:11px;color:#aaa;font-weight:600;">Top ordered items across all events</span>
       </div>
       <div class="bill-items" id="popular-list">
         <div class="bill-empty">
-          <div class="bill-empty-icon">📊</div>
+          <div class="bill-empty-icon"><i class="bi bi-bar-chart"></i></div>
           Loading popular dishes...
         </div>
       </div>
@@ -756,7 +757,7 @@
 
     <!-- BILLS — customer only -->
     <div class="bills-panel" id="panel-bills" style="display:none;">
-      <div class="bills-header">🧾 Bills</div>
+      <div class="bills-header"><i class="bi bi-receipt"></i> Bills</div>
       <div class="bills-form">
         <label class="bills-label">Customer</label>
         <select id="bill-customer" class="bills-input">
@@ -771,7 +772,7 @@
       </div>
       <div class="bill-items" id="bill-items">
         <div class="bill-empty">
-          <div class="bill-empty-icon">🛒</div>
+          <div class="bill-empty-icon"><i class="bi bi-cart"></i></div>
           No items added yet.<br>Click + to add items.
         </div>
       </div>
@@ -788,7 +789,7 @@
           <span>Total Amount</span>
           <span class="total-amt" id="grand-total">₱0.00</span>
         </div>
-        <button class="place-order-btn" onclick="placeOrder()">🛒 Place Order</button>
+        <button class="place-order-btn" onclick="placeOrder()"><i class="bi bi-cart-check"></i> Place Order</button>
       </div>
     </div>
 
@@ -807,16 +808,6 @@ const menuParams = new URLSearchParams(window.location.search);
 const selectedCustomerId = menuParams.get('customer_id');
 const selectedCustomerName = menuParams.get('customer_name') || '';
 const MIN_ORDER_LEAD_DAYS = 3;
-const emojiMap = {
-  'Main Course': '🍖',
-  'Rice & Pasta': '🍚',
-  'Appetizer': '🥗',
-  'Side Dish': '🥘',
-  'Dessert': '🍮',
-  'Beverage': '🥤',
-  'Package': '📦'
-};
-
 const ICONS = {
   sun: '<svg class="ui-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"></path></svg>',
   moon: '<svg class="ui-icon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path></svg>',
@@ -1026,7 +1017,7 @@ async function loadMenu() {
     allItems = await res.json();
     renderGrid();
   } catch (e) {
-    document.getElementById('item-grid').innerHTML = '<div class="no-items">⚠️ Could not load menu. Make sure Flask is running.</div>';
+    document.getElementById('item-grid').innerHTML = '<div class="no-items">Could not load menu. Make sure Flask is running.</div>';
   }
 }
 
@@ -1051,7 +1042,7 @@ function renderCardCarousel(item) {
   const fallback = `
     <div class="item-img-fallback" style="display:flex">
       <div style="text-align:center;color:#ccc">
-        <div style="font-size:32px">📷</div>
+        <div style="font-size:32px">No Image</div>
         <div style="font-size:10px;margin-top:4px;font-weight:600;letter-spacing:.3px">No Photo</div>
       </div>
     </div>`;
@@ -1067,7 +1058,7 @@ function renderCardCarousel(item) {
       onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <div class="item-img-fallback" style="display:none">
       <div style="text-align:center;color:#ccc">
-        <div style="font-size:32px">📷</div>
+        <div style="font-size:32px">No Image</div>
         <div style="font-size:10px;margin-top:4px;font-weight:600;letter-spacing:.3px">No Photo</div>
       </div>
     </div>
@@ -1098,8 +1089,8 @@ function renderItemCardHtml(item) {
         <div class="item-footer">
           <div class="item-price">${formatMoney(item.PricePerPax)}<span>${(item.pricing_type || 'per_pax') === 'flat_rate' ? 'flat' : '/pax'}</span></div>
           <div style="display:flex;gap:6px;align-items:center">
-            ${canManageMenu() ? `<button onclick="openEditModal(${item.ItemID}, event)" title="Edit dish" style="width:34px;height:34px;border-radius:9px;background:#f5f5f5;color:#666;border:1.5px solid #eee;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✏️</button>` : ''}
-            ${role === 'admin' ? `<button onclick='event.stopPropagation();deleteMenu(${item.ItemID}, ${JSON.stringify(item.ItemName)}, this)' title="Delete dish" ${deletingMenuIds.has(item.ItemID) ? 'disabled' : ''} style="width:34px;height:34px;border-radius:9px;background:#fce4ec;color:#c62828;border:1.5px solid #f8bbd0;font-size:15px;cursor:${deletingMenuIds.has(item.ItemID) ? 'wait' : 'pointer'};display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:${deletingMenuIds.has(item.ItemID) ? '0.7' : '1'}">🗑️</button>` : ''}
+            ${canManageMenu() ? `<button onclick="openEditModal(${item.ItemID}, event)" title="Edit dish" style="width:34px;height:34px;border-radius:9px;background:#f5f5f5;color:#666;border:1.5px solid #eee;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="bi bi-pencil-square"></i></button>` : ''}
+            ${role === 'admin' ? `<button onclick='event.stopPropagation();deleteMenu(${item.ItemID}, ${JSON.stringify(item.ItemName)}, this)' title="Delete dish" ${deletingMenuIds.has(item.ItemID) ? 'disabled' : ''} style="width:34px;height:34px;border-radius:9px;background:#fce4ec;color:#c62828;border:1.5px solid #f8bbd0;font-size:15px;cursor:${deletingMenuIds.has(item.ItemID) ? 'wait' : 'pointer'};display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:${deletingMenuIds.has(item.ItemID) ? '0.7' : '1'}"><i class="bi bi-trash"></i></button>` : ''}
             ${role === 'customer' ? `<button class="add-btn" onclick="addToBill(${item.ItemID}, event)" title="Add to bill">+</button>` : ''}
           </div>
         </div>
@@ -1226,7 +1217,7 @@ function addToBill(itemId, event) {
   if (existing) existing.qty += 1;
   else billItems.push({ item, qty: 1 });
   renderBill();
-  showToast(`✅ ${item.ItemName} added`, 'success');
+  showToast(`${item.ItemName} added`, 'success');
 }
 
 function changeQty(itemId, delta) {
@@ -1252,7 +1243,7 @@ function renderBill() {
   document.getElementById('pax-display').textContent = pax;
 
   if (!billItems.length) {
-    container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon">🛒</div>No items added yet.<br>Click + to add items.</div>`;
+    container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon"><i class="bi bi-cart"></i></div>No items added yet.<br>Click + to add items.</div>`;
     document.getElementById('subtotal').textContent = '₱0.00';
     document.getElementById('grand-total').textContent = '₱0.00';
     document.getElementById('item-count').textContent = '0 items';
@@ -1276,7 +1267,7 @@ function renderBill() {
           <div class="bill-item-name">${escapeHtml(entry.item.ItemName)}</div>
           <div class="bill-item-price">${pricingLabel(entry.item)}</div>
           <div class="bill-item-line">${escapeHtml(getBreakdownLabel(entry.item, pax, entry.qty))}</div>
-          <button class="remove-btn" onclick="removeFromBill(${entry.item.ItemID})">✕ Remove</button>
+          <button class="remove-btn" onclick="removeFromBill(${entry.item.ItemID})">Remove</button>
         </div>
         <div class="bill-qty">
           <button class="qty-btn" onclick="changeQty(${entry.item.ItemID}, -1)">−</button>
@@ -1304,12 +1295,12 @@ async function placeOrder() {
   const eventDate = document.getElementById('bill-eventdate').value;
   const eventAddress = document.getElementById('bill-eventaddress').value.trim();
   const pax = parseInt(document.getElementById('bill-pax').value, 10);
-  if (!customerID) return showToast('⚠️ Please select a customer', 'error');
-  if (!eventDate) return showToast('⚠️ Please select an event date', 'error');
-  if (eventDate < minEventDate()) return showToast(`⚠️ Event date must be at least ${MIN_ORDER_LEAD_DAYS} days from today`, 'error');
-  if (!eventAddress) return showToast('⚠️ Please enter the event address', 'error');
-  if (!pax || pax < 1) return showToast('⚠️ Please enter number of pax', 'error');
-  if (!billItems.length) return showToast('⚠️ Please add at least one item', 'error');
+  if (!customerID) return showToast('Please select a customer', 'error');
+  if (!eventDate) return showToast('Please select an event date', 'error');
+  if (eventDate < minEventDate()) return showToast(`Event date must be at least ${MIN_ORDER_LEAD_DAYS} days from today`, 'error');
+  if (!eventAddress) return showToast('Please enter the event address', 'error');
+  if (!pax || pax < 1) return showToast('Please enter number of pax', 'error');
+  if (!billItems.length) return showToast('Please add at least one item', 'error');
 
   const totalAmount = billItems.reduce((sum, entry) => sum + getLineTotal(entry.item, pax, entry.qty), 0);
   const items = billItems.map(entry => ({ ItemID: entry.item.ItemID, Quantity: entry.qty }));
@@ -1334,11 +1325,11 @@ async function placeOrder() {
       })
     });
     const data = await res.json();
-    btn.textContent = '🛒 Place Order';
+    btn.innerHTML = '<i class="bi bi-cart-check"></i> Place Order';
     btn.disabled = false;
-    if (!res.ok) return showToast(`❌ ${data.message || 'Could not place order'}`, 'error');
+    if (!res.ok) return showToast(`${data.message || 'Could not place order'}`, 'error');
 
-    showToast(`✅ Order #${data.order_id} placed! ${formatMoney(totalAmount)}`, 'success');
+    showToast(`Order #${data.order_id} placed. ${formatMoney(totalAmount)}`, 'success');
     billItems = [];
     document.getElementById('bill-customer').value = (role === 'customer' || selectedCustomerId) ? customerID : '';
     document.getElementById('bill-eventdate').value = '';
@@ -1346,9 +1337,9 @@ async function placeOrder() {
     document.getElementById('bill-pax').value = '';
     renderBill();
   } catch (e) {
-    btn.textContent = '🛒 Place Order';
+    btn.innerHTML = '<i class="bi bi-cart-check"></i> Place Order';
     btn.disabled = false;
-    showToast('🔌 Cannot connect to server', 'error');
+    showToast('Cannot connect to server', 'error');
   }
 }
 
@@ -1367,9 +1358,9 @@ async function toggleAvail(itemId, isChecked) {
       detailModalState.item.Available = item.Available;
       renderDetailModal();
     }
-    showToast(isChecked ? `✅ "${item.ItemName}" is now visible` : `🚫 "${item.ItemName}" is now hidden`);
+    showToast(isChecked ? `"${item.ItemName}" is now visible` : `"${item.ItemName}" is now hidden`);
   } catch (e) {
-    showToast('⚠️ Could not save availability', 'error');
+    showToast('Could not save availability', 'error');
   }
 }
 
@@ -1379,10 +1370,10 @@ async function loadPopularDishes() {
     const res = await fetch(`${API}/menu-items/top3`);
     const items = await res.json();
     if (!Array.isArray(items) || !items.length) {
-      container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon">📊</div>No order data yet.<br>Popular dishes will appear here.</div>`;
+      container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon"><i class="bi bi-bar-chart"></i></div>No order data yet.<br>Popular dishes will appear here.</div>`;
       return;
     }
-    const medals = ['🥇', '🥈', '🥉'];
+    const medals = ['1', '2', '3'];
     container.innerHTML = items.map((item, index) => {
       const imgUrl = getItemImage(item);
       return `
@@ -1401,7 +1392,7 @@ async function loadPopularDishes() {
         </div>`;
     }).join('');
   } catch (e) {
-    container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon">⚠️</div>Could not load popular dishes.</div>`;
+    container.innerHTML = `<div class="bill-empty"><div class="bill-empty-icon"><i class="bi bi-exclamation-triangle"></i></div>Could not load popular dishes.</div>`;
   }
 }
 
@@ -1436,7 +1427,7 @@ async function deleteMenu(itemId, itemName, trigger = null) {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const message = data.message || 'Could not delete dish.';
-      return showToast(`❌ ${message}`, 'error');
+      return showToast(`${message}`, 'error');
     }
     if (card) {
       card.style.transition = 'opacity 0.25s, transform 0.25s';
@@ -1448,9 +1439,9 @@ async function deleteMenu(itemId, itemName, trigger = null) {
     removeGridCard(itemId);
     closeDishModal(true);
     if (role !== 'customer') loadPopularDishes();
-    showToast(`🗑️ "${itemName}" deleted.`, 'success');
+    showToast(`"${itemName}" deleted.`, 'success');
   } catch (e) {
-    showToast('⚠️ Could not delete dish. Please try again.', 'error');
+    showToast('Could not delete dish. Please try again.', 'error');
   } finally {
     deletingMenuIds.delete(itemId);
     if (trigger && trigger.isConnected) {
@@ -1592,7 +1583,7 @@ function renderDishDetail() {
         <div style="font-size:17px;font-weight:800;color:inherit">Dish Details</div>
         <div style="font-size:12px;color:#999;margin-top:3px">Menu item preview</div>
       </div>
-      <button class="dish-modal-close" onclick="closeDishModal(true)">✕</button>
+      <button class="dish-modal-close" onclick="closeDishModal(true)">x</button>
     </div>
     <div class="dish-modal-body">
       <div class="detail-hero">
@@ -1643,7 +1634,7 @@ function renderDishForm() {
         <div style="font-size:17px;font-weight:800;color:inherit">${state.itemId ? 'Edit Dish' : 'Add New Dish'}</div>
         <div id="dish-form-subtitle" style="font-size:12px;color:#999;margin-top:3px">${isPackage ? 'Package photos: up to 5 images' : 'Single dish photo upload'}</div>
       </div>
-      <button class="dish-modal-close" onclick="cancelDishForm()">✕</button>
+      <button class="dish-modal-close" onclick="cancelDishForm()">x</button>
     </div>
     <div class="dish-modal-body">
       <div class="dish-form-grid">
@@ -1654,7 +1645,7 @@ function renderDishForm() {
         <div class="dish-field">
           <label class="dish-label">Category *</label>
           <select class="dish-select" id="dish-category-input" onchange="handleCategoryChange(this.value)">
-            ${['Main Course','Rice & Pasta','Appetizer','Side Dish','Dessert','Beverage','Package'].map(category => `<option value="${category}" ${state.Category === category ? 'selected' : ''}>${emojiMap[category]} ${category}</option>`).join('')}
+            ${['Main Course','Rice & Pasta','Appetizer','Side Dish','Dessert','Beverage','Package'].map(category => `<option value="${category}" ${state.Category === category ? 'selected' : ''}>${category}</option>`).join('')}
           </select>
         </div>
         <div class="dish-field">
@@ -1703,10 +1694,10 @@ function renderPhotoSlot(index) {
     <div class="photo-slot" data-slot-index="${index}" onclick="triggerPhotoUpload(${index})" style="${hideByCategory ? 'display:none' : ''}">
       ${hasImage
         ? `<img src="${slot.preview}" alt="${labels[index]}">`
-        : `<div class="photo-slot-empty"><div style="font-size:28px;margin-bottom:6px">📷</div>${labels[index]}<div style="font-size:10px;color:#ccc;margin-top:4px">Click to upload</div></div>`}
+        : `<div class="photo-slot-empty"><div style="font-size:28px;margin-bottom:6px">No Image</div>${labels[index]}<div style="font-size:10px;color:#ccc;margin-top:4px">Click to upload</div></div>`}
       <input type="file" id="dish-photo-input-${index}" accept="image/*" style="display:none" onchange="handlePhotoSelected(${index}, this.files[0])">
       <div class="photo-slot-meta">${labels[index]}</div>
-      ${hasImage ? `<button class="photo-remove" onclick="removePhotoSlot(${index}, event)">✕</button>` : ''}
+      ${hasImage ? `<button class="photo-remove" onclick="removePhotoSlot(${index}, event)">x</button>` : ''}
     </div>`;
 }
 
@@ -1846,11 +1837,11 @@ async function saveDish() {
 
   if (!formState.ItemName || !formState.Category || formState.PricePerPax === '') {
     window.AppUI?.shakeInvalid(['dish-name-input', 'dish-category-input', 'dish-price-input']);
-    return showToast('⚠️ Name, category, and price are required.', 'error');
+    return showToast('Name, category, and price are required.', 'error');
   }
   if (formState.pricing_type === 'flat_rate' && (!formState.serves_up_to || Number(formState.serves_up_to) < 1)) {
     window.AppUI?.shakeInvalid(['dish-serves-up-to-input']);
-    return showToast('⚠️ Enter a valid serves up to value for flat rate items.', 'error');
+    return showToast('Enter a valid serves up to value for flat rate items.', 'error');
   }
 
   const formData = new FormData();
@@ -1881,14 +1872,14 @@ async function saveDish() {
     if (!res.ok) {
       window.AppUI?.setButtonLoading(saveButton, false);
       renderDetailModal();
-      return showToast(`❌ ${data.message || 'Error saving dish.'}`, 'error');
+      return showToast(`${data.message || 'Error saving dish.'}`, 'error');
     }
 
     const savedItem = data.item;
     if (savedItem) upsertMenuItem(savedItem);
     if (savedItem) updateGridCard(savedItem, { preferTop: !editingExisting });
     if (role !== 'customer') loadPopularDishes();
-    showToast(formState.itemId ? '✅ Dish updated!' : '✅ Dish added!', 'success');
+    showToast(formState.itemId ? 'Dish updated!' : 'Dish added!', 'success');
     clearDishDraft(editingExisting ? formState.itemId : null);
 
     if (savedItem) {
@@ -1903,7 +1894,7 @@ async function saveDish() {
     formState.saving = false;
     window.AppUI?.setButtonLoading(saveButton, false);
     renderDetailModal();
-    showToast('🔌 Cannot connect to server', 'error');
+    showToast('Cannot connect to server', 'error');
   }
 }
 
@@ -1964,3 +1955,4 @@ window.onload = () => {
 <script src="js/settings.js"></script>
 </body>
 </html>
+

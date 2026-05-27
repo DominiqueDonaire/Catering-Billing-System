@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Payments</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <script>
     (function () {
       const size = Number(localStorage.getItem('fontSize'));
@@ -63,11 +64,15 @@
     .summary-banner { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
     .summary-card { background:var(--card-bg); border:1px solid var(--border); border-radius:14px; padding:20px 22px; display:flex; align-items:center; gap:16px; box-shadow:var(--shadow); transition:background 0.2s,border-color 0.2s; }
     .icon-wrap { width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .icon-wrap .bi { font-size:22px; line-height:1; }
     .s-label { font-size:11px; color:var(--text-muted); font-weight:600; letter-spacing:0.4px; text-transform:uppercase; margin-bottom:4px; }
     .s-value { font-size:22px; font-weight:700; line-height:1; }
-    .summary-card.orange .icon-wrap { background:#fff5ea; }
-    .summary-card.green  .icon-wrap { background:#e8f5ee; }
-    .summary-card.red    .icon-wrap { background:#fce4ec; }
+    .summary-card.orange .icon-wrap { background:#fff5ea; color:#c96e00; }
+    .summary-card.green  .icon-wrap { background:#e8f5ee; color:#1b7a4b; }
+    .summary-card.red    .icon-wrap { background:#fce4ec; color:#c62828; }
+    body.dark .summary-card.orange .icon-wrap { background:#3a2a14; color:#ffb74d; }
+    body.dark .summary-card.green  .icon-wrap { background:#173529; color:#78e0ad; }
+    body.dark .summary-card.red    .icon-wrap { background:#3d2026; color:#ff8a80; }
     .summary-card.orange .s-value   { color:var(--orange); }
     .summary-card.green  .s-value   { color:var(--green); }
     .summary-card.red    .s-value   { color:var(--red); }
@@ -180,15 +185,15 @@
 
     <div class="summary-banner">
       <div class="summary-card orange">
-        <div class="icon-wrap">&#x1F4B0;</div>
+        <div class="icon-wrap"><i class="bi bi-cash-coin"></i></div>
         <div><div class="s-label" id="total-label">Total Payments Collected</div><div class="s-value" id="total-collected">&#x20B1;0.00</div></div>
       </div>
       <div class="summary-card green">
-        <div class="icon-wrap">&#x2705;</div>
+        <div class="icon-wrap"><i class="bi bi-check-circle"></i></div>
         <div><div class="s-label">Total Verified</div><div class="s-value" id="total-verified">&#x20B1;0.00</div></div>
       </div>
       <div class="summary-card red">
-        <div class="icon-wrap">&#x23F3;</div>
+        <div class="icon-wrap"><i class="bi bi-hourglass-split"></i></div>
         <div><div class="s-label">Outstanding Balance</div><div class="s-value" id="total-outstanding">&#x20B1;0.00</div></div>
       </div>
     </div>
@@ -196,7 +201,7 @@
     <!-- Unpaid Orders (customer only) -->
     <div class="card-box" id="unpaid-orders-card" style="display:none;">
       <div class="section-title">
-        &#x1F4CB; Unpaid Orders
+        <i class="bi bi-clipboard2-check"></i> Unpaid Orders
         <span class="badge-count" id="unpaid-count">0</span>
       </div>
       <div class="table-wrap">
@@ -211,12 +216,12 @@
     <div class="card-box">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
         <div class="section-title" style="margin-bottom:0">
-          &#x1F4C4; Payment Records
+          <i class="bi bi-receipt"></i> Payment Records
           <span class="badge-count" id="payment-count">0</span>
         </div>
         <div id="payment-archive-tabs" style="display:none;gap:6px;display:flex">
-          <button id="ptab-btn-active" class="action-btn tab-btn-selected" onclick="showPaymentTab('active')" style="font-size:13px">📋 Active</button>
-          <button id="ptab-btn-archived" class="action-btn" onclick="showPaymentTab('archived')" style="font-size:13px;background:#fff3e0;color:#e65100">🗄️ Archives</button>
+          <button id="ptab-btn-active" class="action-btn tab-btn-selected" onclick="showPaymentTab('active')" style="font-size:13px"><i class="bi bi-list-ul"></i> Active</button>
+          <button id="ptab-btn-archived" class="action-btn" onclick="showPaymentTab('archived')" style="font-size:13px;background:#fff3e0;color:#e65100"><i class="bi bi-archive"></i> Archives</button>
         </div>
       </div>
 
@@ -405,7 +410,7 @@ function renderPayments(data) {
   document.getElementById('payment-count').textContent=data.length;
   tbody.innerHTML='';
   if (!data.length) {
-    tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="ei">\uD83D\uDCED</div><p>No payment records found</p></div></td></tr>';
+    tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="ei">No records</div><p>No payment records found</p></div></td></tr>';
     return;
   }
   data.forEach(p=>{
@@ -421,19 +426,19 @@ function renderPayments(data) {
     let actions='';
     // Admin: verify, reject, edit, delete
     if (role==='admin') {
-      if (vs!=='Verified') actions+='<button class="action-btn btn-verify" onclick="verifyPayment('+p.PaymentID+',\'verify\')">\u2705 Verify</button>';
-      if (vs==='Pending')  actions+='<button class="action-btn btn-reject" onclick="verifyPayment('+p.PaymentID+',\'reject\')">\u274C Reject</button>';
-      actions+='<button class="action-btn btn-edit-p" onclick="openEditSheet('+p.PaymentID+')">\u270F\uFE0F Edit</button>';
-      actions+='<button class="action-btn btn-delete" onclick="deletePayment('+p.PaymentID+')">🗄️ Archive</button>';
+      if (vs!=='Verified') actions+='<button class="action-btn btn-verify" onclick="verifyPayment('+p.PaymentID+',\'verify\')"><i class="bi bi-check-circle"></i> Verify</button>';
+      if (vs==='Pending')  actions+='<button class="action-btn btn-reject" onclick="verifyPayment('+p.PaymentID+',\'reject\')"><i class="bi bi-x-circle"></i> Reject</button>';
+      actions+='<button class="action-btn btn-edit-p" onclick="openEditSheet('+p.PaymentID+')"><i class="bi bi-pencil-square"></i> Edit</button>';
+      actions+='<button class="action-btn btn-delete" onclick="deletePayment('+p.PaymentID+')"><i class="bi bi-archive"></i> Archive</button>';
     }
     // Staff: verify and reject only
     if (role==='staff') {
-      if (vs!=='Verified') actions+='<button class="action-btn btn-verify" onclick="verifyPayment('+p.PaymentID+',\'verify\')">\u2705 Verify</button>';
-      if (vs==='Pending')  actions+='<button class="action-btn btn-reject" onclick="verifyPayment('+p.PaymentID+',\'reject\')">\u274C Reject</button>';
+      if (vs!=='Verified') actions+='<button class="action-btn btn-verify" onclick="verifyPayment('+p.PaymentID+',\'verify\')"><i class="bi bi-check-circle"></i> Verify</button>';
+      if (vs==='Pending')  actions+='<button class="action-btn btn-reject" onclick="verifyPayment('+p.PaymentID+',\'reject\')"><i class="bi bi-x-circle"></i> Reject</button>';
     }
     // Receipt: all roles when verified
-    if (vs==='Verified') actions+='<button class="action-btn btn-receipt" onclick="printReceipt('+p.PaymentID+')" title="View payment receipt">\uD83E\uDDFE Receipt</button>';
-    if (vs==='Verified') actions+='<button class="action-btn btn-pdf" onclick="downloadReceiptPDF('+p.PaymentID+')" title="Download as PDF">\u2B07\uFE0F PDF</button>';
+    if (vs==='Verified') actions+='<button class="action-btn btn-receipt" onclick="printReceipt('+p.PaymentID+')" title="View payment receipt"><i class="bi bi-receipt"></i> Receipt</button>';
+    if (vs==='Verified') actions+='<button class="action-btn btn-pdf" onclick="downloadReceiptPDF('+p.PaymentID+')" title="Download as PDF"><i class="bi bi-file-earmark-pdf"></i> PDF</button>';
 
     tbody.innerHTML+='<tr id="payment-row-'+p.PaymentID+'" data-status="'+vs+'" data-order="'+p.OrderID+'">'
       +'<td><strong>#'+p.PaymentID+'</strong></td>'
@@ -494,7 +499,7 @@ function renderOrdersForPayment(orders) {
     const total = parseFloat(o.TotalAmount||0);
     const remaining = summary.remaining;
     const days=Math.ceil((new Date(o.EventDate)-new Date())/86400000);
-    const urgency=(days<=3&&days>=0)?'<div style="font-size:11px;color:#c62828;font-weight:700;margin-top:2px;">\u26A0\uFE0F '+days+'d left</div>':'';
+    const urgency=(days<=3&&days>=0)?'<div style="font-size:11px;color:#c62828;font-weight:700;margin-top:2px;">'+days+'d left</div>':'';
     const sMap={Confirmed:'pill-green',Pending:'pill-orange'};
     const tr=document.createElement('tr');
     tr.id='order-pay-row-'+o.OrderID;
@@ -504,7 +509,7 @@ function renderOrdersForPayment(orders) {
       +'<td>'+o.Pax+'</td>'
       +'<td><strong>'+formatMoney(total)+'</strong><div style="font-size:11px;color:var(--text-muted);margin-top:2px;">Balance: '+formatMoney(remaining)+'</div></td>'
       +'<td><span class="pill '+(sMap[o.Status]||'pill-gray')+'">'+o.Status+'</span></td>'
-      +'<td><button class="action-btn btn-pay" onclick="openPayDrawer('+o.OrderID+',\'order-pay-row-'+o.OrderID+'\')">\uD83D\uDCB3 Pay Now</button></td>';
+      +'<td><button class="action-btn btn-pay" onclick="openPayDrawer('+o.OrderID+',\'order-pay-row-'+o.OrderID+'\')"><i class="bi bi-credit-card"></i> Pay Now</button></td>';
     tbody.appendChild(tr);
   });
 }
@@ -537,7 +542,7 @@ function openPayDrawer(orderId, anchorId) {
   const html='<tr class="drawer-row" id="drawer-pay-order-'+orderId+'"><td colspan="'+colSpan+'">'
     +'<div class="drawer-inner">'
     +'<div class="drawer-header">'
-    +'<span style="font-size:20px">\uD83D\uDCB3</span>'
+    +'<span class="nav-icon-slot" data-icon="card">'+icon('card')+'</span>'
     +'<span class="drawer-title">Make Payment \u2014 Order #'+orderId+'</span>'
     +'<span class="drawer-badge">'+formatMoney(summary.remaining)+' due</span>'
     +'</div>'
@@ -554,14 +559,14 @@ function openPayDrawer(orderId, anchorId) {
     +'<option value="">Select Method</option>'
     +'<option>Cash</option><option>GCash</option><option>Maya</option><option>Bank Transfer</option><option>Credit Card</option>'
     +'</select>'
-    +'<div id="npay-cash-note-'+orderId+'" class="auto-note">\u2705 Cash is auto-verified upon submission</div>'
+    +'<div id="npay-cash-note-'+orderId+'" class="auto-note">Cash is auto-verified upon submission</div>'
     +'</div>'
     +'</div>'
     +'<div><label class="form-label">Reference No. <span style="text-transform:none;font-weight:400;color:var(--text-muted)">(optional, for non-cash)</span></label>'
     +'<input type="text" id="npay-ref-'+orderId+'" placeholder="e.g. GCash reference number" class="form-control"></div>'
     +'<div class="drawer-footer">'
-    +'<button class="drawer-save" onclick="submitNewPayment('+orderId+')">\uD83D\uDCBE Submit Payment</button>'
-    +'<button class="drawer-cancel-btn" onclick="clearDrawer()">\u2716 Cancel</button>'
+    +'<button class="drawer-save" onclick="submitNewPayment('+orderId+')"><i class="bi bi-floppy"></i> Submit Payment</button>'
+    +'<button class="drawer-cancel-btn" onclick="clearDrawer()">Cancel</button>'
     +'</div>'
     +'</div></td></tr>';
   const row=document.getElementById(anchorId || ('order-pay-row-'+orderId)) || document.getElementById('order-pay-row-'+orderId);
@@ -585,7 +590,7 @@ async function submitNewPayment(orderId) {
   const res=await fetch(API+'/payments',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
   const result=await res.json();
   if(!res.ok){window.AppUI?.setButtonLoading(saveButton, false);alert(result.message||'Error submitting payment');return;}
-  showToast(isCash?'\u2705 Payment submitted & auto-verified!':'\u2705 Payment submitted! Awaiting admin verification.');
+  showToast(isCash?'Payment submitted and auto-verified.':'Payment submitted. Awaiting admin verification.');
   clearDrawer(); await loadPayments(); await loadOrderOptions();
 }
 
@@ -596,9 +601,9 @@ async function verifyPayment(id,action) {
     const res=await fetch(API+'/payments/'+id+'/verify',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,verifier_id:localStorage.getItem('user_id')})});
     const data=await res.json();
     if(!res.ok){alert(data.message||'Error');return;}
-    showToast(action==='verify'?'\u2705 Payment verified!':'\u274C Payment rejected.');
+    showToast(action==='verify'?'Payment verified.':'Payment rejected.');
     loadPayments();
-  } catch {showToast('\uD83D\uDD0C Cannot connect to server.','#c62828');}
+  } catch {showToast('Cannot connect to server.','#c62828');}
 }
 
 // Admin edit via bottom sheet
@@ -630,8 +635,8 @@ async function submitEditPayment() {
     const res=await fetch(API+'/payments/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({PaymentDate:date,AmountPaid:amount,Method:method,ReferenceNo:refno,_role:role})});
     const result=await res.json();
     if(!res.ok){window.AppUI?.setButtonLoading(saveButton, false);alert(result.message||'Error');return;}
-    window.AppUI?.setButtonLoading(saveButton, false); showToast('\u2705 Payment updated!'); closeEditSheet(); loadPayments();
-  } catch {window.AppUI?.setButtonLoading(saveButton, false);showToast('\uD83D\uDD0C Cannot connect to server.','#c62828');}
+    window.AppUI?.setButtonLoading(saveButton, false); showToast('Payment updated.'); closeEditSheet(); loadPayments();
+  } catch {window.AppUI?.setButtonLoading(saveButton, false);showToast('Cannot connect to server.','#c62828');}
 }
 
 // Admin archive (soft delete)
@@ -642,7 +647,7 @@ async function deletePayment(id) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { showToast(data.message || 'Could not archive payment.', '#c62828'); return; }
   await window.AppUI?.animateRemoval(row, 'app-removing-row');
-  showToast('🗄️ Payment archived.', '#e65100');
+  showToast('Payment archived.', '#e65100');
   loadPayments();
 }
 
@@ -730,7 +735,7 @@ async function printReceipt(paymentId) {
     '.item-sub{font-size:11px;color:#777;margin-top:4px;}',
     '.footer{text-align:center;margin-top:30px;font-size:12px;color:#aaa;}',
     '<\/style><\/head><body>',
-    '<h2>\uD83E\uDDFE Payment Receipt<\/h2>',
+    '<h2>Payment Receipt<\/h2>',
     '<div class="sub">Catering Billing \xB7 '+new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'})+'<\/div>',
     '<div class="row"><span>Receipt #<\/span><strong>'+p.PaymentID+'<\/strong><\/div>',
     '<div class="row"><span>Order #<\/span><strong>'+p.OrderID+'<\/strong><\/div>',
@@ -742,7 +747,7 @@ async function printReceipt(paymentId) {
     refRow,
     itemRows,
     '<div class="row"><span>Amount Paid<\/span><span class="total">'+formatMoney(p.AmountPaid)+'<\/span><\/div>',
-    '<div><span class="badge">\u2705 '+p.VerificationStatus+'<\/span><\/div>',
+    '<div><span class="badge">'+p.VerificationStatus+'<\/span><\/div>',
     '<div class="footer">Thank you for your payment! \xB7 Catering Billing<\/div>',
     '<\/body><\/html>'
   ].join('\n');
@@ -773,7 +778,7 @@ async function downloadReceiptPDF(paymentId) {
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','bold');
   doc.setFontSize(16);
-  doc.text('\uD83E\uDDFE  Payment Receipt', pageW/2, 26, {align:'center'});
+  doc.text('Payment Receipt', pageW/2, 26, {align:'center'});
   doc.setFontSize(9);
   doc.setFont('helvetica','normal');
   doc.text('Catering Billing  \u00B7  '+new Date().toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'}), pageW/2, 44, {align:'center'});
@@ -837,7 +842,7 @@ async function downloadReceiptPDF(paymentId) {
   doc.setTextColor(...green);
   doc.setFont('helvetica','bold');
   doc.setFontSize(9);
-  doc.text('\u2705 '+p.VerificationStatus, 77, y+13, {align:'center'});
+  doc.text(p.VerificationStatus, 77, y+13, {align:'center'});
 
   // Footer
   y += 40;
@@ -851,7 +856,7 @@ async function downloadReceiptPDF(paymentId) {
   doc.text('Thank you for your payment!  \u00B7  Catering Billing', pageW/2, y, {align:'center'});
 
   doc.save('Receipt_'+p.PaymentID+'.pdf');
-  showToast('\u2B07\uFE0F Receipt PDF downloaded!');
+  showToast('Receipt PDF downloaded.');
 }
 
 function showToast(msg,color='#1b7a4b') {

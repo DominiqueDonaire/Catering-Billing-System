@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Register — Catering Billing System</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -257,16 +258,16 @@
 
 <div class="wrapper">
   <button class="dark-toggle" onclick="toggleDark()" title="Toggle dark mode">
-    <span id="dark-icon">🌙</span>
+    <span id="dark-icon"><i class="bi bi-moon-stars-fill"></i></span>
   </button>
 
   <!-- LEFT -->
   <div class="left">
     <div class="left-bg"></div>
-    <span class="bolt bolt-1">⚡</span>
-    <span class="bolt bolt-2">⚡</span>
-    <span class="bolt bolt-3">⚡</span>
-    <span class="bolt bolt-4">⚡</span>
+    <span class="bolt bolt-1"><i class="bi bi-lightning-charge-fill"></i></span>
+    <span class="bolt bolt-2"><i class="bi bi-lightning-charge-fill"></i></span>
+    <span class="bolt bolt-3"><i class="bi bi-lightning-charge-fill"></i></span>
+    <span class="bolt bolt-4"><i class="bi bi-lightning-charge-fill"></i></span>
 
     <div class="left-content">
       <div class="food-stack">
@@ -292,7 +293,7 @@
   <!-- RIGHT -->
   <div class="right">
     <p class="eyebrow">Get started</p>
-    <h2 class="form-title">🍽️ CREATE AN ACCOUNT</h2>
+    <h2 class="form-title"><i class="bi bi-person-plus-fill"></i> CREATE AN ACCOUNT</h2>
 
     <div id="error-msg"   class="msg error"></div>
     <div id="success-msg" class="msg success"></div>
@@ -328,7 +329,7 @@
       <label>Password</label>
       <div class="pw-wrap">
         <input type="password" id="password" placeholder="At least 6 characters" oninput="checkStrength()">
-        <button class="pw-toggle" type="button" onclick="togglePw('password','eye1')"><span id="eye1">👁️</span></button>
+        <button class="pw-toggle" type="button" onclick="togglePw('password','eye1')"><span id="eye1"><i class="bi bi-eye"></i></span></button>
       </div>
       <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
       <div class="strength-text" id="strength-text"></div>
@@ -338,7 +339,7 @@
       <label>Confirm Password</label>
       <div class="pw-wrap">
         <input type="password" id="confirm-password" placeholder="Re-type your password">
-        <button class="pw-toggle" type="button" onclick="togglePw('confirm-password','eye2')"><span id="eye2">👁️</span></button>
+        <button class="pw-toggle" type="button" onclick="togglePw('confirm-password','eye2')"><span id="eye2"><i class="bi bi-eye"></i></span></button>
       </div>
     </div>
 
@@ -364,8 +365,8 @@
   function togglePw(inputId, eyeId) {
     const input = document.getElementById(inputId);
     const eye   = document.getElementById(eyeId);
-    if (input.type === 'password') { input.type = 'text'; eye.textContent = '🙈'; }
-    else { input.type = 'password'; eye.textContent = '👁️'; }
+    if (input.type === 'password') { input.type = 'text'; eye.innerHTML = '<i class="bi bi-eye-slash"></i>'; }
+    else { input.type = 'password'; eye.innerHTML = '<i class="bi bi-eye"></i>'; }
   }
 
   function checkStrength() {
@@ -380,10 +381,10 @@
     if (/[^A-Za-z0-9]/.test(pw))  s++;
     const levels = [
       { w:'0%',   bg:'#eee',    label:'' },
-      { w:'25%',  bg:'#e53935', label:'⚠️ Weak' },
-      { w:'50%',  bg:'#fb8c00', label:'🔶 Fair' },
-      { w:'75%',  bg:'#fdd835', label:'🔷 Good' },
-      { w:'100%', bg:'#43a047', label:'✅ Strong' },
+      { w:'25%',  bg:'#e53935', label:'Weak' },
+      { w:'50%',  bg:'#fb8c00', label:'Fair' },
+      { w:'75%',  bg:'#fdd835', label:'Good' },
+      { w:'100%', bg:'#43a047', label:'Strong' },
     ];
     const lvl = Math.min(s, 4);
     fill.style.width      = levels[lvl].w;
@@ -394,13 +395,15 @@
   function toggleDark() {
     document.body.classList.toggle('dark');
     const icon = document.getElementById('dark-icon');
-    icon.textContent = document.body.classList.contains('dark') ? '☀️' : '🌙';
+    icon.innerHTML = document.body.classList.contains('dark')
+      ? '<i class="bi bi-brightness-high-fill"></i>'
+      : '<i class="bi bi-moon-stars-fill"></i>';
     localStorage.setItem('darkMode', document.body.classList.contains('dark'));
   }
   window.onload = () => {
     if (localStorage.getItem('darkMode') === 'true') {
       document.body.classList.add('dark');
-      document.getElementById('dark-icon').textContent = '☀️';
+      document.getElementById('dark-icon').innerHTML = '<i class="bi bi-brightness-high-fill"></i>';
     }
   };
 </script>
