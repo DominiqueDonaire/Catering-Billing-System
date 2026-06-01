@@ -72,9 +72,145 @@
     .banner-icon svg { width: 34px; height: 34px; }
 
     /* ══ WELCOME BANNER ══ */
-    .welcome-banner { background: linear-gradient(135deg, #e07b00, #f5a623); border-radius: 16px; padding: 26px 30px; color: #fff; margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between; }
-    .welcome-banner h4 { font-size: 21px; font-weight: 700; margin-bottom: 4px; }
-    .welcome-banner p  { font-size: 13px; opacity: 0.9; margin: 0; }
+    .welcome-banner {
+      position: relative;
+      min-height: 230px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 74% 24%, rgba(245,166,35,0.24) 0 18%, transparent 19%),
+        linear-gradient(135deg, #fff8f0 0%, #fff 48%, #fff1df 100%);
+      border: 1px solid #ffe1bd;
+      border-radius: 18px;
+      padding: 34px 36px;
+      color: #202124;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+      box-shadow: 0 14px 34px rgba(224,123,0,0.12);
+    }
+    body.dark .welcome-banner {
+      background:
+        radial-gradient(circle at 74% 24%, rgba(245,166,35,0.15) 0 18%, transparent 19%),
+        linear-gradient(135deg, #242424 0%, #202124 52%, #2a2118 100%);
+      border-color: #4a3218;
+      color: #e8eaed;
+      box-shadow: 0 14px 34px rgba(0,0,0,0.28);
+    }
+    .welcome-copy { position: relative; z-index: 2; max-width: 620px; }
+    .welcome-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: rgba(224,123,0,0.11);
+      color: #e07b00;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+    body.dark .welcome-eyebrow { background: rgba(245,166,35,0.14); color: #f5c36a; }
+    .welcome-banner h4 {
+      font-size: clamp(30px, 4vw, 52px);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: 0;
+      margin: 0 0 12px;
+      color: #202124;
+    }
+    body.dark .welcome-banner h4 { color: #f1f3f4; }
+    .welcome-banner h4 .accent { color: #ff8617; }
+    .welcome-banner p {
+      max-width: 560px;
+      font-size: 15px;
+      line-height: 1.6;
+      color: #5f6368;
+      margin: 0;
+    }
+    body.dark .welcome-banner p { color: #bdc1c6; }
+    .welcome-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 22px;
+    }
+    .welcome-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 13px;
+      border-radius: 999px;
+      background: #fff;
+      border: 1px solid #ffe0b2;
+      color: #9a5700;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 6px 18px rgba(224,123,0,0.08);
+    }
+    body.dark .welcome-chip {
+      background: #2b2d31;
+      border-color: #4a3218;
+      color: #f5c36a;
+    }
+    .welcome-visual {
+      position: relative;
+      z-index: 1;
+      width: min(340px, 32vw);
+      min-width: 250px;
+      aspect-ratio: 1;
+      flex-shrink: 0;
+    }
+    .welcome-plate {
+      position: absolute;
+      inset: 8%;
+      border-radius: 50%;
+      background:
+        linear-gradient(rgba(255,255,255,0.18), rgba(255,255,255,0.18)),
+        url('https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=760&auto=format&fit=crop&q=80') center/cover;
+      border: 12px solid #fff;
+      box-shadow: 0 24px 55px rgba(0,0,0,0.18);
+    }
+    body.dark .welcome-plate { border-color: #2b2d31; box-shadow: 0 24px 55px rgba(0,0,0,0.38); }
+    .welcome-plate::before,
+    .welcome-plate::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: #ff8617;
+      opacity: 0.18;
+      z-index: -1;
+    }
+    .welcome-plate::before { width: 96px; height: 96px; right: -18px; top: 22px; }
+    .welcome-plate::after { width: 150px; height: 150px; left: -42px; bottom: -22px; }
+    .welcome-mini-card {
+      position: absolute;
+      left: 0;
+      bottom: 10px;
+      width: 170px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(255,224,178,0.9);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.16);
+      backdrop-filter: blur(8px);
+    }
+    body.dark .welcome-mini-card {
+      background: rgba(43,45,49,0.92);
+      border-color: #4a3218;
+    }
+    .welcome-mini-card strong {
+      display: block;
+      font-size: 13px;
+      color: #202124;
+      margin-bottom: 4px;
+    }
+    body.dark .welcome-mini-card strong { color: #f1f3f4; }
+    .welcome-mini-card span { font-size: 11px; color: #e07b00; font-weight: 800; }
 
     /* ══ STATS CARDS ══ */
     .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
@@ -259,11 +395,21 @@
     @media (max-width: 1100px) {
       .stats-row { grid-template-columns: repeat(2, 1fr); }
       .right-panel { display: none; }
+      .welcome-banner { min-height: 210px; padding: 28px; }
+      .welcome-visual { width: 250px; min-width: 220px; }
+      .welcome-mini-card { width: 150px; }
     }
     @media (max-width: 800px) {
       .sidebar { transform: translateX(-220px); }
       .main { margin-left: 0; }
       .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .welcome-banner {
+        align-items: flex-start;
+        min-height: 0;
+        padding: 24px;
+      }
+      .welcome-banner h4 { font-size: 34px; }
+      .welcome-visual { display: none; }
     }
   </style>
 </head>
@@ -312,11 +458,23 @@
 
       <!-- WELCOME BANNER -->
       <div class="welcome-banner">
-        <div>
-          <h4 id="welcome-text">Welcome back!</h4>
+        <div class="welcome-copy">
+          <div class="welcome-eyebrow"><span class="nav-icon-slot" data-icon="tray"></span><span id="welcome-role">Catering Dashboard</span></div>
+          <h4 id="welcome-text">Welcome back, <span class="accent" id="welcome-name">there</span></h4>
           <p id="welcome-sub">Here's what's happening with your catering business today.</p>
+          <div class="welcome-actions">
+            <span class="welcome-chip"><span class="nav-icon-slot" data-icon="clock"></span><span>Today overview</span></span>
+            <span class="welcome-chip"><span class="nav-icon-slot" data-icon="trend"></span><span>Live operations</span></span>
+          </div>
         </div>
-        <div class="banner-icon" id="banner-icon"></div>
+        <div class="welcome-visual" aria-hidden="true">
+          <div class="welcome-plate"></div>
+          <div class="welcome-mini-card">
+            <strong>Fresh catering insights</strong>
+            <span>Ready for service</span>
+          </div>
+        </div>
+        <div class="banner-icon" id="banner-icon" style="display:none"></div>
       </div>
 
       <!-- STATS ROW -->
@@ -516,7 +674,7 @@ function applyStaticIcons() {
 // Topbar
 document.getElementById('topbar-user').textContent   = username;
 document.getElementById('topbar-avatar').textContent = username.charAt(0).toUpperCase();
-document.getElementById('welcome-text').textContent  = `Welcome back, ${username}!`;
+document.getElementById('welcome-name').textContent  = username;
 
 const roleEl = document.getElementById('topbar-role');
 roleEl.textContent = role;
@@ -766,7 +924,8 @@ function renderStatusBreakdown(orders) {
    ADMIN SETUP
 ════════════════════════════════════════════════════════════════ */
 async function setupAdmin() {
-  document.getElementById('welcome-sub').textContent = 'Full system overview — all data visible.';
+  document.getElementById('welcome-role').textContent = 'Owner Command Center';
+  document.getElementById('welcome-sub').textContent = 'Track revenue, orders, customers, and kitchen activity from one clean operations dashboard.';
   document.getElementById('banner-icon').innerHTML = icon('crown');
   document.getElementById('income-section').style.display = 'block';
   document.getElementById('chart-section').style.display  = 'block';
@@ -818,7 +977,8 @@ async function setupAdmin() {
    STAFF SETUP
 ════════════════════════════════════════════════════════════════ */
 async function setupStaff() {
-  document.getElementById('welcome-sub').textContent = "Here's today's catering overview.";
+  document.getElementById('welcome-role').textContent = 'Service Team Dashboard';
+  document.getElementById('welcome-sub').textContent = "Monitor today's catering flow, pending orders, payments, and customer activity before service starts.";
   document.getElementById('banner-icon').innerHTML = icon('chef');
   document.getElementById('income-section').style.display = 'block';
   document.getElementById('chart-section').style.display  = 'block';
@@ -861,7 +1021,8 @@ async function setupStaff() {
    CUSTOMER SETUP
 ════════════════════════════════════════════════════════════════ */
 async function setupCustomer() {
-  document.getElementById('welcome-sub').textContent  = "Here's a summary of your catering bookings.";
+  document.getElementById('welcome-role').textContent = 'My Catering Portal';
+  document.getElementById('welcome-sub').textContent  = 'Review your upcoming events, booking status, and payment summary in one place.';
   document.getElementById('banner-icon').innerHTML  = icon('spark');
   document.getElementById('tracker-section').style.display = 'block';
 
